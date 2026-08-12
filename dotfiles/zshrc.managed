@@ -1,0 +1,26 @@
+# ==========================================================
+# mac-bootstrap이 관리하는 zsh 설정
+#
+# 이 파일은 ~/.config/mac-bootstrap/zshrc로 복사되고,
+# 기존 ~/.zshrc에서는 source 한 줄로 불러온다.
+# ==========================================================
+
+# 명령 기록을 여러 터미널에서 공유하고 중복을 줄인다.
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
+setopt APPEND_HISTORY
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+
+# 자주 사용하는 Git 및 파일 목록 명령의 짧은 별칭이다.
+alias gs="git status"
+alias gl="git log --oneline --graph --decorate --all"
+alias ll="ls -al"
+
+# 강의장에서 자주 사용하는 화면 정리 및 Python 실행 명령이다.
+alias c='clear'
+alias py='python3 main.py'
+
+# 현재 폴더만 표시하는 단순한 프롬프트다.
+PROMPT='%F{cyan}%1~%f %# '

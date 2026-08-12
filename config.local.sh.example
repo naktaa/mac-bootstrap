@@ -1,0 +1,10 @@
+#!/bin/zsh
+
+# 이 파일을 config.local.sh로 복사한 뒤 개인 값을 입력한다.
+# config.local.sh는 .gitignore에 포함되어 commit되지 않는다.
+
+GIT_USER_NAME="홍길동"
+GIT_USER_EMAIL="you@example.com"
+
+# 필요하면 기본 설정을 개인 값으로 덮어쓸 수 있다.
+# KEY_REPEAT=2
