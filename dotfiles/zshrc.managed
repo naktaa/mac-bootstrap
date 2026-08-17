@@ -22,10 +22,12 @@ alias ll="ls -al"
 alias c='clear'
 alias py='python3 main.py'
 
-# 홈 최상위에서는 이름만, 하위에서는 기존 zsh 방식의 전체 경로를 표시한다.
+# 계정 홈을 Nakta로 표시하고, 하위에서는 전체 경로를 이어서 표시한다.
 mac_bootstrap_prompt_path() {
   if [[ "$PWD" == "$HOME" ]]; then
     print -nr -- 'Nakta'
+  elif [[ "$PWD" == "$HOME"/* ]]; then
+    print -nr -- "Nakta/${PWD#"$HOME"/}"
   else
     print -Pnr -- '%~'
   fi

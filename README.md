@@ -10,7 +10,6 @@
 ```bash
 git clone https://github.com/naktaa/mac-bootstrap.git
 cd mac-bootstrap
-chmod +x setup.sh
 ./setup.sh --dry-run
 ./setup.sh
 ```
