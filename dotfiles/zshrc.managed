@@ -22,5 +22,13 @@ alias ll="ls -al"
 alias c='clear'
 alias py='python3 main.py'
 
-# 현재 폴더만 표시하는 단순한 프롬프트다.
-PROMPT='%F{cyan}%1~%f %# '
+# 홈 최상위에서는 이름만, 하위에서는 기존 zsh 방식의 전체 경로를 표시한다.
+mac_bootstrap_prompt_path() {
+  if [[ "$PWD" == "$HOME" ]]; then
+    print -nr -- 'Nakta'
+  else
+    print -Pnr -- '%~'
+  fi
+}
+setopt PROMPT_SUBST
+PROMPT='%F{cyan}$(mac_bootstrap_prompt_path)%f %# '
