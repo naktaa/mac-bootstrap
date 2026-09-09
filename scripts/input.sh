@@ -90,8 +90,8 @@ configure_control_space() {
 
   ensure_hotkey_backup || return 0
   result="$(/usr/bin/osascript -l JavaScript "$HOTKEY_HELPER" configure-control-space 2>&1)"
-  status=$?
-  if [ "$status" -ne 0 ]; then
+  hotkey_apply_status=$?
+  if [ "$hotkey_apply_status" -ne 0 ]; then
     log_warn "Control-Space 자동 설정에 실패했습니다: $result"
     log_warn "시스템 설정 > 키보드 > 키보드 단축키 > 입력 소스에서 직접 설정하세요."
     return 0
@@ -130,8 +130,8 @@ configure_spotlight_shortcuts() {
 
   ensure_hotkey_backup || return 0
   result="$(/usr/bin/osascript -l JavaScript "$HOTKEY_HELPER" disable-spotlight 2>&1)"
-  status=$?
-  if [ "$status" -ne 0 ]; then
+  hotkey_apply_status=$?
+  if [ "$hotkey_apply_status" -ne 0 ]; then
     log_warn "Spotlight 단축키 자동 설정에 실패했습니다: $result"
     log_warn "시스템 설정 > 키보드 > 키보드 단축키 > Spotlight에서 직접 해제하세요."
     return 0
