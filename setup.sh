@@ -84,9 +84,14 @@ configure_input_environment
 configure_shell
 configure_vim
 configure_git
-apply_shortcut_changes
+apply_system_changes
 
 print_summary
+
+if [ "$DRY_RUN" -eq 0 ] && is_true "$MANAGE_ZSH"; then
+  printf '\n현재 Terminal의 zsh 설정까지 반영하려면 현재 셸을 교체하세요:\n'
+  printf '  exec /bin/zsh -l\n'
+fi
 
 if [ "$ERROR_COUNT" -gt 0 ]; then
   exit 1

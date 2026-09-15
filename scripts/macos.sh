@@ -30,23 +30,37 @@ configure_core_macos() {
     "반복 입력 시작 지연"
 }
 
-apply_shortcut_changes() {
+apply_system_changes() {
   section "설정 반영"
 
-  if [ "$SHORTCUTS_CHANGED" -eq 0 ]; then
-    log_skip "즉시 반영할 단축키 변경 없음"
+  if [ "$SYSTEM_SETTINGS_CHANGED" -eq 0 ] && [ "$SHORTCUTS_CHANGED" -eq 0 ]; then
+    log_skip "즉시 반영할 시스템 설정 변경 없음"
     return 0
   fi
 
   if [ "$DRY_RUN" -eq 1 ]; then
-    log_change "실제 실행에서는 변경한 키보드 단축키의 즉시 반영을 시도합니다."
+    log_change "실제 실행에서는 변경한 키보드·마우스·단축키 설정의 즉시 반영을 시도합니다."
     return 0
   fi
 
   activation_tool="/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings"
-  if [ -x "$activation_tool" ] && "$activation_tool" -u >/dev/null 2>&1; then
-    log_ok "키보드 단축키 설정 활성화 완료"
-  else
-    log_warn "단축키 즉시 활성화 도구를 사용할 수 없습니다. 로그아웃 후 확실히 반영됩니다."
+  if [ ! -x "$activation_tool" ]; then
+    log_warn "시스템 설정 즉시 활성화 도구를 사용할 수 없습니다. 로그아웃 후 확실히 반영됩니다."
+    return 0
   fi
+
+  activation_output="$("$activation_tool" -u 2>&1)"
+  activation_status=$?
+  if [ "$activation_status" -ne 0 ]; then
+    log_warn "시스템 설정 즉시 활성화 도구 실행에 실패했습니다. 로그아웃 후 확실히 반영됩니다."
+    return 0
+  fi
+
+  if [ "$SHORTCUTS_CHANGED" -eq 1 ] && \
+     printf '%s\n' "$activation_output" | /usr/bin/grep -Eq 'CGSSetSymbolic.*failed\('; then
+    log_warn "키보드·마우스 설정 갱신은 실행했지만 단축키 즉시 활성화에 실패했습니다. 로그아웃 후 반영됩니다."
+    return 0
+  fi
+
+  log_ok "키보드·마우스·단축키 설정 활성화 도구 실행 완료"
 }

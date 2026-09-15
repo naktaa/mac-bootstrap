@@ -11,16 +11,19 @@
 git clone https://github.com/naktaa/mac-bootstrap.git
 cd mac-bootstrap
 ./setup.sh --dry-run
-./setup.sh
+./setup.sh && exec /bin/zsh -l
 ```
 
 - `--dry-run`: 실제로 변경하지 않고 현재 상태와 변경 예정 항목만 출력
 - 옵션 없는 실행: 설정을 실제 적용
+- `exec /bin/zsh -l`: setup 성공 후 현재 zsh를 새 로그인 셸로 교체하여
+  변경된 alias와 셸 설정을 즉시 반영
 - 두 번째 실행부터는 이미 원하는 상태인 항목을 `[SKIP]` 처리
 
 한 항목이 실패해도 나머지 설정은 계속 진행하며 마지막에 결과를
-요약한다. 키 반복이나 단축키가 즉시 반영되지 않으면 한 번 로그아웃한 뒤
-다시 로그인한다.
+요약한다. 키보드·마우스·단축키를 변경하면 macOS 설정 활성화 도구로
+즉시 반영을 시도하며, 활성화 도구를 사용할 수 없다는 경고가 나오면 한 번
+로그아웃한 뒤 다시 로그인한다.
 
 ## 자동화 항목
 
@@ -98,10 +101,12 @@ commit한다. 다음 Mac에서 `./setup.sh`를 실행하면 수정된 파일이
 # <<< mac-bootstrap <<<
 ```
 
-setup 실행 직후 현재 Terminal에도 바로 반영하려면 다음을 실행한다.
+setup 실행 직후 현재 Terminal에도 바로 반영하려면 setup과 셸 교체를 한 줄로
+실행한다. `setup.sh`는 자식 프로세스이므로 실행 중인 부모 셸의 환경을 직접
+바꿀 수 없다.
 
 ```bash
-source ~/.zshrc
+./setup.sh && exec /bin/zsh -l
 ```
 
 ## Vim 설정 수정 위치

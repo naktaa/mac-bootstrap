@@ -9,16 +9,21 @@ const currentUser = $.kCFPreferencesCurrentUser;
 const anyHost = $.kCFPreferencesAnyHost;
 
 function mutableRoot() {
-  const original = $.CFPreferencesCopyValue(
+  const originalReference = $.CFPreferencesCopyValue(
     preferenceKey,
     applicationId,
     currentUser,
     anyHost
   );
-  if (original === undefined || original === null) {
+  if (isNil(originalReference)) {
     return $.NSMutableDictionary.dictionary;
   }
+  const original = ObjC.castRefToObject(originalReference);
   return $.NSMutableDictionary.dictionaryWithDictionary(original);
+}
+
+function isNil(value) {
+  return value === undefined || value === null || String(value) === '[id nil]';
 }
 
 function entryFor(root, identifier) {
@@ -27,14 +32,14 @@ function entryFor(root, identifier) {
 
 function mutableEntry(root, identifier) {
   const original = entryFor(root, identifier);
-  if (original === undefined || original === null) {
+  if (isNil(original)) {
     return $.NSMutableDictionary.dictionary;
   }
   return $.NSMutableDictionary.dictionaryWithDictionary(original);
 }
 
 function booleanValue(value) {
-  if (value === undefined || value === null) {
+  if (isNil(value)) {
     return null;
   }
   return Boolean(ObjC.unwrap(value));
@@ -42,7 +47,7 @@ function booleanValue(value) {
 
 function enabledState(root, identifier) {
   const entry = entryFor(root, identifier);
-  if (entry === undefined || entry === null) {
+  if (isNil(entry)) {
     return 'missing';
   }
   const value = booleanValue(entry.objectForKey($('enabled')));
@@ -51,15 +56,15 @@ function enabledState(root, identifier) {
 
 function parametersState(root, identifier) {
   const entry = entryFor(root, identifier);
-  if (entry === undefined || entry === null) {
+  if (isNil(entry)) {
     return 'missing';
   }
   const value = entry.objectForKey($('value'));
-  if (value === undefined || value === null) {
+  if (isNil(value)) {
     return 'missing';
   }
   const parameters = value.objectForKey($('parameters'));
-  if (parameters === undefined || parameters === null || Number(parameters.count) < 3) {
+  if (isNil(parameters) || Number(parameters.count) < 3) {
     return 'missing';
   }
   const result = [];
@@ -101,7 +106,7 @@ function configureControlSpace() {
   const root = mutableRoot();
   const entry = mutableEntry(root, 60);
   const valueOriginal = entry.objectForKey($('value'));
-  const value = valueOriginal === undefined || valueOriginal === null
+  const value = isNil(valueOriginal)
     ? $.NSMutableDictionary.dictionary
     : $.NSMutableDictionary.dictionaryWithDictionary(valueOriginal);
 
@@ -123,7 +128,7 @@ function disableSpotlight() {
   const root = mutableRoot();
   [64, 65].forEach(function (identifier) {
     const original = entryFor(root, identifier);
-    if (original !== undefined && original !== null) {
+    if (!isNil(original)) {
       const entry = $.NSMutableDictionary.dictionaryWithDictionary(original);
       entry.setObjectForKey($.NSNumber.numberWithBool(false), $('enabled'));
       root.setObjectForKey(entry, $(String(identifier)));
@@ -146,4 +151,3 @@ function run(arguments) {
   }
   throw new Error('지원하지 않는 action: ' + action);
 }
-

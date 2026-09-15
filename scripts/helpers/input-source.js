@@ -13,46 +13,67 @@ function unwrap(value) {
     return null;
   }
   try {
-    return ObjC.unwrap(value);
+    return ObjC.unwrap(ObjC.castRefToObject(value));
   } catch (error) {
-    return value;
+    try {
+      return ObjC.unwrap(value);
+    } catch (unwrapError) {
+      return value;
+    }
   }
+}
+
+function inputSources() {
+  const reference = $.TISCreateInputSourceList(null, true);
+  return ObjC.castRefToObject(reference);
 }
 
 function property(source, key) {
   return unwrap($.TISGetInputSourceProperty(source, key));
 }
 
-function isKoreanTwoSet(source) {
+function koreanTwoSetScore(source) {
   const sourceId = String(property(source, $.kTISPropertyInputSourceID) || '');
   const inputModeId = String(property(source, $.kTISPropertyInputModeID) || '');
   const localizedName = String(property(source, $.kTISPropertyLocalizedName) || '');
 
-  if (koreanSourceIds.indexOf(sourceId) !== -1 &&
-      (sourceId.indexOf('2SetKorean') !== -1 || inputModeId.indexOf('2SetKorean') !== -1)) {
-    return true;
+  if (inputModeId === 'com.apple.inputmethod.Korean.2SetKorean') {
+    return 3;
   }
-
-  return inputModeId === 'com.apple.inputmethod.Korean.2SetKorean' ||
-    localizedName === '2-Set Korean' ||
-    localizedName === '두벌식';
+  if (sourceId === 'com.apple.inputmethod.Korean.2SetKorean') {
+    return 2;
+  }
+  if (koreanSourceIds.indexOf(sourceId) !== -1 && inputModeId.indexOf('2SetKorean') !== -1) {
+    return 2;
+  }
+  if (localizedName === '2-Set Korean' || localizedName === '두벌식') {
+    return 1;
+  }
+  return 0;
 }
 
 function findKoreanTwoSet() {
-  const sources = $.TISCreateInputSourceList(null, true);
+  const sources = inputSources();
   const count = Number(sources.count);
+  let bestSource = null;
+  let bestScore = 0;
 
   for (let index = 0; index < count; index += 1) {
     const source = sources.objectAtIndex(index);
-    if (isKoreanTwoSet(source)) {
+    const score = koreanTwoSetScore(source);
+    if (score === 3) {
       return source;
     }
+    if (score > bestScore) {
+      bestSource = source;
+      bestScore = score;
+    }
   }
-  return null;
+  return bestSource;
 }
 
 function findAsciiSource(onlyEnabled) {
-  const sources = $.TISCreateInputSourceList(null, true);
+  const sources = inputSources();
   const count = Number(sources.count);
   let fallback = null;
 

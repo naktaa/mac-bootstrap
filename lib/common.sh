@@ -8,6 +8,7 @@ OK_COUNT=0
 WARN_COUNT=0
 ERROR_COUNT=0
 SHORTCUTS_CHANGED=0
+SYSTEM_SETTINGS_CHANGED=0
 BACKUP_DIR=""
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -125,6 +126,7 @@ apply_default_bool() {
   fi
 
   log_change "$label: $current -> $desired"
+  SYSTEM_SETTINGS_CHANGED=1
   if [ "$DRY_RUN" -eq 1 ]; then
     return 0
   fi
@@ -161,6 +163,7 @@ apply_default_number() {
   fi
 
   log_change "$label: $current -> $desired"
+  SYSTEM_SETTINGS_CHANGED=1
   if [ "$DRY_RUN" -eq 1 ]; then
     return 0
   fi
