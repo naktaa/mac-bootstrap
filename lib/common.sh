@@ -221,6 +221,19 @@ backup_defaults_domain() {
   return 0
 }
 
+backup_current_host_defaults_domain() {
+  domain="$1"
+  backup_name="$2"
+  [ "$DRY_RUN" -eq 0 ] || return 0
+  ensure_backup_dir || return 1
+  if /usr/bin/defaults -currentHost export "$domain" "$BACKUP_DIR/$backup_name" >/dev/null 2>&1; then
+    log_ok "현재 호스트 설정 백업 생성: $BACKUP_DIR/$backup_name"
+    return 0
+  fi
+  log_warn "$domain 현재 호스트 설정이 아직 없어 백업을 만들지 못했습니다."
+  return 0
+}
+
 print_summary() {
   section "실행 요약"
   printf '변경 예정/적용 : %s\n' "$CHANGE_COUNT"

@@ -19,12 +19,9 @@ KEY_REPEAT=2
 # 숫자가 작을수록 반복이 빨리 시작되며, 15는 UI의 짧은 지연에 가깝다.
 INITIAL_KEY_REPEAT=15
 
-# macOS 기본 두벌식 한글 입력 소스를 활성화한다.
-ENSURE_KOREAN_INPUT=true
-
-# 이전 입력 소스 선택 단축키를 Control-Space로 지정한다.
-# 영문과 두벌식만 사용할 때 사실상 한/영 전환으로 동작한다.
-CONFIGURE_CONTROL_SPACE=true
+# Caps Lock을 fn(지구본) 키로 바꾸고 fn의 동작을 입력 소스 변경으로 설정한다.
+# Caps Lock 본래의 대문자 잠금 기능은 사용하지 않는다.
+CONFIGURE_CAPS_LOCK_INPUT_SWITCH=true
 
 # Spotlight 검색(Command-Space)과 Finder 검색 창
 # (Option-Command-Space) 단축키를 비활성화한다.

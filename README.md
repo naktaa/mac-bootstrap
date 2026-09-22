@@ -31,8 +31,8 @@ cd mac-bootstrap
 |---|---|
 | 마우스 | 자연스러운 스크롤을 꺼서 Windows 방식의 휠 방향 사용 |
 | 키보드 | 빠른 키 반복과 짧은 반복 시작 지연 |
-| 입력 소스 | 기본 영문과 두벌식 한글 입력 활성화 |
-| 한/영 전환 | 이전 입력 소스 선택을 `Control-Space`로 설정 |
+| 입력 소스 | 기존에 활성화된 입력 소스 유지 (`ABC`와 구름 두벌식 사용 전제) |
+| 한/영 전환 | Caps Lock을 `fn/지구본`으로 바꿔 입력 소스 전환 |
 | Spotlight | `Command-Space`, `Option-Command-Space` 단축키 해제 |
 | zsh | history, prompt와 자주 사용하는 alias 적용 |
 | Vim | 줄 번호, 4칸 Tab·들여쓰기, 상태 줄, cindent, syntax 적용 |
@@ -148,8 +148,7 @@ NATURAL_SCROLLING=false
 KEY_REPEAT=2
 INITIAL_KEY_REPEAT=15
 
-ENSURE_KOREAN_INPUT=true
-CONFIGURE_CONTROL_SPACE=true
+CONFIGURE_CAPS_LOCK_INPUT_SWITCH=true
 DISABLE_SPOTLIGHT_SHORTCUTS=true
 
 MANAGE_ZSH=true
@@ -161,13 +160,25 @@ macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 
 ## 한글 입력과 단축키 처리 방식
 
-두벌식 입력은 macOS Text Input Source API를 이용한다. 내부 plist의 입력
-소스 배열을 직접 덮어쓰지 않는다. 기본 영문과 두벌식이 이미 활성화되어
-있으면 다시 추가하지 않는다.
+입력 소스 목록은 변경하지 않는다. `ABC`와 구름 두벌식이 이미 활성화된
+환경을 전제로 한다.
+
+한/영 전환은 `imac-setup`과 같은 방식으로 구성한다.
+
+1. `AppleFnUsageType=1`로 설정해 `fn/지구본` 키의 동작을 입력 소스 변경으로 지정한다.
+2. 연결된 키보드의 Vendor ID, Product ID, Country Code를 찾는다.
+3. 해당 키보드의 ByHost modifier 설정에 `Caps Lock → fn/지구본` 매핑을 저장한다.
+4. IOKit HID 이벤트 시스템에도 같은 매핑을 넣어 즉시 적용한다.
+
+따라서 Caps Lock을 누르면 현재 활성화된 입력 소스가 전환된다. 활성 입력 소스가
+`ABC`와 구름 두벌식뿐이면 두 입력기 사이를 전환한다. 실제 `fn/지구본` 키도
+입력 소스 변경으로 동작한다. Caps Lock 본래의 대문자 잠금 기능은 사용할 수 없다.
+
+키보드별 modifier 배열은 Caps Lock에서 fn으로 가는 단일 매핑으로 저장한다.
+같은 키보드에 별도의 사용자 지정 modifier 매핑이 있다면 교체된다.
 
 시스템 단축키는 기존 dictionary를 유지하면서 다음 항목만 변경한다.
 
-- symbolic hotkey ID `60`: `Control-Space` 입력 소스 전환
 - symbolic hotkey ID `64`: Spotlight 검색 비활성화
 - symbolic hotkey ID `65`: Spotlight 분류의 Finder 검색 단축키 비활성화
 
@@ -175,8 +186,8 @@ macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 출력하고 다음 단계로 넘어간다. 이 경우 다음 경로에서 직접 변경한다.
 
 ```text
-시스템 설정 > 키보드 > 텍스트 입력 > 편집
-시스템 설정 > 키보드 > 키보드 단축키 > 입력 소스
+시스템 설정 > 키보드 > fn 키를 눌러 > 입력 소스 변경
+시스템 설정 > 키보드 > 키보드 단축키 > 보조 키
 시스템 설정 > 키보드 > 키보드 단축키 > Spotlight
 ```
 
@@ -190,7 +201,8 @@ macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 
 다음 파일이 상황에 따라 생성된다.
 
-- `input-sources.plist`
+- `hitoolbox-before-caps-lock.plist`
+- `current-host-global-preferences.plist`
 - `symbolic-hotkeys.plist`
 - `zshrc.before-bootstrap`
 - `vimrc.before-bootstrap`
@@ -207,4 +219,3 @@ macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 
 - [Apple: Korean Input Method User Guide](https://support.apple.com/guide/korean-input-method/welcome/mac)
 - [Apple: macOS 키보드 단축키 비활성화](https://support.apple.com/guide/mac-help/keyboard-shortcuts-mchlp2262/mac)
-- [Apple Developer: TISEnableInputSource 사용 예](https://developer.apple.com/library/archive/qa/qa1810/_index.html)
