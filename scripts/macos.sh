@@ -28,6 +28,11 @@ configure_core_macos() {
     "키 반복 속도"
   apply_default_number NSGlobalDomain InitialKeyRepeat "$INITIAL_KEY_REPEAT" -int \
     "반복 입력 시작 지연"
+
+  # 시스템 설정 > 키보드 > 텍스트 입력 > 편집의
+  # "자동으로 대문자 시작" 체크박스를 제어한다.
+  apply_default_bool NSGlobalDomain NSAutomaticCapitalizationEnabled \
+    "$AUTOMATIC_CAPITALIZATION" "자동으로 대문자 시작"
 }
 
 apply_system_changes() {

@@ -30,7 +30,7 @@ cd mac-bootstrap
 | 구분 | 설정 내용 |
 |---|---|
 | 마우스 | 자연스러운 스크롤을 꺼서 Windows 방식의 휠 방향 사용 |
-| 키보드 | 빠른 키 반복과 짧은 반복 시작 지연 |
+| 키보드 | 빠른 키 반복, 짧은 반복 시작 지연, 자동으로 대문자 시작 끄기 |
 | 입력 소스 | 기존에 활성화된 입력 소스 유지 (`ABC`와 구름 두벌식 사용 전제) |
 | 한/영 전환 | Caps Lock을 `fn/지구본`으로 바꿔 입력 소스 전환 |
 | Spotlight | `Command-Space`, `Option-Command-Space` 단축키 해제 |
@@ -147,6 +147,7 @@ Vim 설정을 추가하려면 `dotfiles/vimrc.managed`를 수정한 후 setup을
 NATURAL_SCROLLING=false
 KEY_REPEAT=2
 INITIAL_KEY_REPEAT=15
+AUTOMATIC_CAPITALIZATION=false
 
 CONFIGURE_CAPS_LOCK_INPUT_SWITCH=true
 DISABLE_SPOTLIGHT_SHORTCUTS=true
@@ -157,6 +158,8 @@ MANAGE_VIM=true
 
 `KEY_REPEAT`와 `INITIAL_KEY_REPEAT`는 숫자가 작을수록 빠르다. `2`와 `15`는
 macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
+`AUTOMATIC_CAPITALIZATION=false`는 시스템 설정의
+`키보드 > 텍스트 입력 > 편집 > 자동으로 대문자 시작` 체크를 해제한다.
 
 ## 한글 입력과 단축키 처리 방식
 

@@ -8,3 +8,4 @@ GIT_USER_EMAIL="you@example.com"
 
 # 필요하면 기본 설정을 개인 값으로 덮어쓸 수 있다.
 # KEY_REPEAT=2
+# AUTOMATIC_CAPITALIZATION=false
