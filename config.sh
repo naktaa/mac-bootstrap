@@ -30,6 +30,9 @@ CONFIGURE_CAPS_LOCK_INPUT_SWITCH=true
 # (Option-Command-Space) 단축키를 비활성화한다.
 DISABLE_SPOTLIGHT_SHORTCUTS=true
 
+# 선택한 화면 영역을 클립보드에 복사하는 단축키를 Control-Shift-S로 설정한다.
+CONFIGURE_SCREENSHOT_CLIPBOARD_SHORTCUT=true
+
 # 관리되는 zsh 설정을 ~/.zshrc에서 불러오도록 구성한다.
 MANAGE_ZSH=true
 

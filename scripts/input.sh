@@ -164,6 +164,44 @@ configure_spotlight_shortcuts() {
   fi
 }
 
+configure_screenshot_clipboard_shortcut() {
+  if ! is_true "$CONFIGURE_SCREENSHOT_CLIPBOARD_SHORTCUT"; then
+    log_skip "선택 영역 스크린샷 클립보드 단축키: config에서 유지"
+    return 0
+  fi
+
+  hotkey_state="$1"
+  if printf '%s\n' "$hotkey_state" | /usr/bin/grep -Fqx 'SCREENSHOT_CLIPBOARD_ENABLED=true' && \
+     printf '%s\n' "$hotkey_state" | /usr/bin/grep -Fqx 'SCREENSHOT_CLIPBOARD_PARAMETERS=115,1,393216' && \
+     printf '%s\n' "$hotkey_state" | /usr/bin/grep -Fqx 'SCREENSHOT_CLIPBOARD_TYPE=standard'; then
+    log_skip "선택 영역 스크린샷 클립보드 단축키: 이미 Control-Shift-S"
+    return 0
+  fi
+
+  log_change "선택 영역 스크린샷 클립보드 단축키를 Control-Shift-S로 설정합니다."
+  SHORTCUTS_CHANGED=1
+  if [ "$DRY_RUN" -eq 1 ]; then
+    return 0
+  fi
+
+  ensure_hotkey_backup || return 0
+  result="$(/usr/bin/osascript -l JavaScript "$HOTKEY_HELPER" configure-screenshot-clipboard 2>&1)"
+  hotkey_apply_status=$?
+  if [ "$hotkey_apply_status" -ne 0 ]; then
+    log_warn "스크린샷 단축키 자동 설정에 실패했습니다: $result"
+    log_warn "시스템 설정 > 키보드 > 키보드 단축키 > 스크린샷에서 직접 변경하세요."
+    return 0
+  fi
+
+  if printf '%s\n' "$result" | /usr/bin/grep -Fqx 'SCREENSHOT_CLIPBOARD_ENABLED=true' && \
+     printf '%s\n' "$result" | /usr/bin/grep -Fqx 'SCREENSHOT_CLIPBOARD_PARAMETERS=115,1,393216' && \
+     printf '%s\n' "$result" | /usr/bin/grep -Fqx 'SCREENSHOT_CLIPBOARD_TYPE=standard'; then
+    log_ok "선택 영역 스크린샷 클립보드 단축키 저장 확인"
+  else
+    log_warn "스크린샷 단축키 값을 저장했지만 즉시 확인하지 못했습니다."
+  fi
+}
+
 configure_input_environment() {
   section "한글 입력과 단축키"
 
@@ -178,9 +216,10 @@ configure_input_environment() {
   hotkey_status=$?
   if [ "$hotkey_status" -ne 0 ]; then
     log_warn "macOS symbolic hotkey 구조를 읽지 못했습니다: $hotkey_state"
-    log_warn "Spotlight 단축키는 시스템 설정에서 직접 변경하세요."
+    log_warn "Spotlight와 스크린샷 단축키는 시스템 설정에서 직접 변경하세요."
     return 0
   fi
 
   configure_spotlight_shortcuts "$hotkey_state"
+  configure_screenshot_clipboard_shortcut "$hotkey_state"
 }

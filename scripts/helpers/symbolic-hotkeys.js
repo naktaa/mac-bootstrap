@@ -64,7 +64,7 @@ function parametersState(root, identifier) {
     return 'missing';
   }
   const parameters = value.objectForKey($('parameters'));
-  if (isNil(parameters) || Number(parameters.count) < 3) {
+  if (isNil(parameters) || Number(parameters.count) !== 3) {
     return 'missing';
   }
   const result = [];
@@ -74,11 +74,27 @@ function parametersState(root, identifier) {
   return result.join(',');
 }
 
+function typeState(root, identifier) {
+  const entry = entryFor(root, identifier);
+  if (isNil(entry)) {
+    return 'missing';
+  }
+  const value = entry.objectForKey($('value'));
+  if (isNil(value)) {
+    return 'missing';
+  }
+  const type = value.objectForKey($('type'));
+  return isNil(type) ? 'missing' : String(ObjC.unwrap(type));
+}
+
 function inspect() {
   const root = mutableRoot();
   return [
     'INPUT_SWITCH_ENABLED=' + enabledState(root, 60),
     'INPUT_SWITCH_PARAMETERS=' + parametersState(root, 60),
+    'SCREENSHOT_CLIPBOARD_ENABLED=' + enabledState(root, 31),
+    'SCREENSHOT_CLIPBOARD_PARAMETERS=' + parametersState(root, 31),
+    'SCREENSHOT_CLIPBOARD_TYPE=' + typeState(root, 31),
     'SPOTLIGHT_64_ENABLED=' + enabledState(root, 64),
     'SPOTLIGHT_65_ENABLED=' + enabledState(root, 65)
   ].join('\n');
@@ -138,6 +154,30 @@ function disableSpotlight() {
   return inspect();
 }
 
+function configureScreenshotClipboard() {
+  const root = mutableRoot();
+  // 31: 선택 영역 스크린샷을 클립보드로 복사한다.
+  const entry = mutableEntry(root, 31);
+  const valueOriginal = entry.objectForKey($('value'));
+  const value = isNil(valueOriginal)
+    ? $.NSMutableDictionary.dictionary
+    : $.NSMutableDictionary.dictionaryWithDictionary(valueOriginal);
+
+  // S의 문자 코드, ANSI 키 코드, Control | Shift modifier mask.
+  const parameters = $.NSMutableArray.array;
+  [115, 1, 393216].forEach(function (parameter) {
+    parameters.addObject($.NSNumber.numberWithInt(parameter));
+  });
+
+  value.setObjectForKey(parameters, $('parameters'));
+  value.setObjectForKey($('standard'), $('type'));
+  entry.setObjectForKey(value, $('value'));
+  entry.setObjectForKey($.NSNumber.numberWithBool(true), $('enabled'));
+  root.setObjectForKey(entry, $('31'));
+  save(root);
+  return inspect();
+}
+
 function run(arguments) {
   const action = arguments.length > 0 ? String(arguments[0]) : 'inspect';
   if (action === 'inspect') {
@@ -148,6 +188,9 @@ function run(arguments) {
   }
   if (action === 'disable-spotlight') {
     return disableSpotlight();
+  }
+  if (action === 'configure-screenshot-clipboard') {
+    return configureScreenshotClipboard();
   }
   throw new Error('지원하지 않는 action: ' + action);
 }

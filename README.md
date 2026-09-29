@@ -34,6 +34,7 @@ cd mac-bootstrap
 | 입력 소스 | 기존에 활성화된 입력 소스 유지 (`ABC`와 구름 두벌식 사용 전제) |
 | 한/영 전환 | Caps Lock을 `fn/지구본`으로 바꿔 입력 소스 전환 |
 | Spotlight | `Command-Space`, `Option-Command-Space` 단축키 해제 |
+| 스크린샷 | `Control-Shift-S`로 선택 영역을 캡처해 클립보드에 복사 |
 | zsh | history, prompt와 자주 사용하는 alias 적용 |
 | Vim | 줄 번호, 4칸 Tab·들여쓰기, 상태 줄, cindent, syntax 적용 |
 | Git | global 이름, 이메일, 기본 branch 적용 |
@@ -151,6 +152,7 @@ AUTOMATIC_CAPITALIZATION=false
 
 CONFIGURE_CAPS_LOCK_INPUT_SWITCH=true
 DISABLE_SPOTLIGHT_SHORTCUTS=true
+CONFIGURE_SCREENSHOT_CLIPBOARD_SHORTCUT=true
 
 MANAGE_ZSH=true
 MANAGE_VIM=true
@@ -184,6 +186,7 @@ macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 
 - symbolic hotkey ID `64`: Spotlight 검색 비활성화
 - symbolic hotkey ID `65`: Spotlight 분류의 Finder 검색 단축키 비활성화
+- symbolic hotkey ID `31`: 선택 영역을 클립보드에 복사하는 단축키를 `Control-Shift-S`로 설정
 
 구조가 예상과 다르거나 MDM 정책으로 변경이 차단되면 해당 단계만 경고를
 출력하고 다음 단계로 넘어간다. 이 경우 다음 경로에서 직접 변경한다.
@@ -192,6 +195,7 @@ macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 시스템 설정 > 키보드 > fn 키를 눌러 > 입력 소스 변경
 시스템 설정 > 키보드 > 키보드 단축키 > 보조 키
 시스템 설정 > 키보드 > 키보드 단축키 > Spotlight
+시스템 설정 > 키보드 > 키보드 단축키 > 스크린샷
 ```
 
 ## 백업
