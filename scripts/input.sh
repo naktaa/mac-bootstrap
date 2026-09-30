@@ -196,6 +196,11 @@ configure_spotlight_shortcuts() {
     return 0
   fi
 
+  spotlight64_expected=false
+  spotlight65_expected=false
+  printf '%s\n' "$hotkey_state" | /usr/bin/grep -Fqx 'SPOTLIGHT_64_ENABLED=missing' && spotlight64_expected=missing
+  printf '%s\n' "$hotkey_state" | /usr/bin/grep -Fqx 'SPOTLIGHT_65_ENABLED=missing' && spotlight65_expected=missing
+
   log_change "Spotlight의 Command-Space와 Option-Command-Space를 비활성화합니다."
   SHORTCUTS_CHANGED=1
   if [ "$DRY_RUN" -eq 1 ]; then
@@ -211,8 +216,8 @@ configure_spotlight_shortcuts() {
     return 0
   fi
 
-  if printf '%s\n' "$result" | /usr/bin/grep -Eq '^SPOTLIGHT_64_ENABLED=(false|missing)$' && \
-     printf '%s\n' "$result" | /usr/bin/grep -Eq '^SPOTLIGHT_65_ENABLED=(false|missing)$'; then
+  if printf '%s\n' "$result" | /usr/bin/grep -Fqx "SPOTLIGHT_64_ENABLED=$spotlight64_expected" && \
+     printf '%s\n' "$result" | /usr/bin/grep -Fqx "SPOTLIGHT_65_ENABLED=$spotlight65_expected"; then
     log_ok "Spotlight 단축키 비활성화 확인"
   else
     log_warn "Spotlight 값을 저장했지만 즉시 확인하지 못했습니다."

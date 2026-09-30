@@ -103,7 +103,7 @@ function inspect() {
 function save(root) {
   $.CFPreferencesSetValue(
     preferenceKey,
-    root,
+    ObjC.castObjectToRef(root),
     applicationId,
     currentUser,
     anyHost
@@ -115,6 +115,15 @@ function save(root) {
   ));
   if (!synchronized) {
     throw new Error('CFPreferencesSynchronize가 실패했습니다.');
+  }
+  const saved = $.CFPreferencesCopyValue(
+    preferenceKey,
+    applicationId,
+    currentUser,
+    anyHost
+  );
+  if (isNil(saved)) {
+    throw new Error('AppleSymbolicHotKeys 저장 후 값을 다시 읽지 못했습니다.');
   }
 }
 
