@@ -22,6 +22,9 @@ INITIAL_KEY_REPEAT=15
 # 키보드 텍스트 입력 설정의 "자동으로 대문자 시작"을 끈다.
 AUTOMATIC_CAPITALIZATION=false
 
+# 구름 입력기가 이미 설치된 경우 두벌식 입력 소스를 추가한다.
+CONFIGURE_GUREUM_HAN2=true
+
 # Caps Lock을 fn(지구본) 키로 바꾸고 fn의 동작을 입력 소스 변경으로 설정한다.
 # Caps Lock 본래의 대문자 잠금 기능은 사용하지 않는다.
 CONFIGURE_CAPS_LOCK_INPUT_SWITCH=true

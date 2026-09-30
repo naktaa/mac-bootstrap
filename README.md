@@ -31,7 +31,7 @@ cd mac-bootstrap
 |---|---|
 | 마우스 | 자연스러운 스크롤을 꺼서 Windows 방식의 휠 방향 사용 |
 | 키보드 | 빠른 키 반복, 짧은 반복 시작 지연, 자동으로 대문자 시작 끄기 |
-| 입력 소스 | 기존에 활성화된 입력 소스 유지 (`ABC`와 구름 두벌식 사용 전제) |
+| 입력 소스 | 구름 입력기가 설치돼 있으면 두벌식 입력 소스를 추가하고 기존 입력 소스는 유지 |
 | 한/영 전환 | Caps Lock을 `fn/지구본`으로 바꿔 입력 소스 전환 |
 | Spotlight | `Command-Space`, `Option-Command-Space` 단축키 해제 |
 | 스크린샷 | `Control-Shift-S`로 선택 영역을 캡처해 클립보드에 복사 |
@@ -150,6 +150,7 @@ KEY_REPEAT=2
 INITIAL_KEY_REPEAT=15
 AUTOMATIC_CAPITALIZATION=false
 
+CONFIGURE_GUREUM_HAN2=true
 CONFIGURE_CAPS_LOCK_INPUT_SWITCH=true
 DISABLE_SPOTLIGHT_SHORTCUTS=true
 CONFIGURE_SCREENSHOT_CLIPBOARD_SHORTCUT=true
@@ -165,8 +166,14 @@ macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 
 ## 한글 입력과 단축키 처리 방식
 
-입력 소스 목록은 변경하지 않는다. `ABC`와 구름 두벌식이 이미 활성화된
-환경을 전제로 한다.
+구름 입력기 앱이 이미 설치돼 있으면 macOS 입력 소스 API로 구름 두벌식
+(`org.youknowone.inputmethod.Gureum.han2`)을 추가한다. 기존 입력 소스는
+유지하며, 이미 추가됐다면 건너뛴다. `CONFIGURE_GUREUM_HAN2=false`로
+이 단계를 끌 수 있다. 구름이 설치돼 있지 않거나 macOS가 입력기를 인식하지
+못하면 경고를 출력하고 나머지 설정을 계속한다. 이 단계에는 Xcode Command
+Line Tools의 Swift가 필요하다. 구름 설치 자체는 자동화하지 않는다. macOS가
+API 호출 후에도 사용자 목록을 갱신하지 않으면 기존 목록에 구름 두벌식 항목을
+추가한다. 메뉴에서 바로 보이지 않으면 로그아웃한 뒤 다시 로그인한다.
 
 한/영 전환은 `imac-setup`과 같은 방식으로 구성한다.
 
@@ -209,6 +216,7 @@ macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 다음 파일이 상황에 따라 생성된다.
 
 - `hitoolbox-before-caps-lock.plist`
+- `hitoolbox-before-gureum.plist`
 - `current-host-global-preferences.plist`
 - `symbolic-hotkeys.plist`
 - `zshrc.before-bootstrap`
@@ -225,4 +233,6 @@ macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 ## 참고 문서
 
 - [Apple: Korean Input Method User Guide](https://support.apple.com/guide/korean-input-method/welcome/mac)
+- [Apple: Third-Party Input Method Management Changes](https://developer.apple.com/library/archive/qa/qa1810/_index.html)
+- [Gureum: 설치와 입력 소스 추가](https://github.com/gureum/gureum#설치)
 - [Apple: macOS 키보드 단축키 비활성화](https://support.apple.com/guide/mac-help/keyboard-shortcuts-mchlp2262/mac)

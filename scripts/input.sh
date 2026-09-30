@@ -2,11 +2,66 @@
 
 CAPS_LOCK_HELPER="$SCRIPT_DIR/scripts/helpers/caps-lock-fn.js"
 HOTKEY_HELPER="$SCRIPT_DIR/scripts/helpers/symbolic-hotkeys.js"
+GUREUM_HELPER="$SCRIPT_DIR/scripts/helpers/gureum-input-source.swift"
 HOTKEYS_BACKED_UP=0
 
 # USB HID usage 값. imac-setup과 같은 Caps Lock -> fn(지구본) 매핑이다.
 CAPS_LOCK_HID_USAGE=30064771129
 FN_HID_USAGE=1095216660483
+
+configure_gureum_han2() {
+  if ! is_true "$CONFIGURE_GUREUM_HAN2"; then
+    log_skip "구름 두벌식 입력 소스: config에서 유지"
+    return 0
+  fi
+
+  if [ ! -x /usr/bin/swift ]; then
+    log_warn "Swift를 사용할 수 없어 구름 두벌식 입력 소스를 등록하지 못했습니다. Xcode Command Line Tools를 확인하세요."
+    return 0
+  fi
+
+  source_state="$(/usr/bin/swift "$GUREUM_HELPER" status 2>&1)"
+  source_status=$?
+  if [ "$source_status" -ne 0 ]; then
+    log_warn "구름 두벌식 입력 소스를 확인하지 못했습니다: $source_state"
+    return 0
+  fi
+  source_state="${source_state##*$'\n'}"
+  case "$source_state" in
+    enabled)
+      log_skip "구름 두벌식 입력 소스: 이미 추가됨"
+      return 0
+      ;;
+    missing)
+      log_warn "구름 입력기가 설치되지 않았거나 macOS에 등록되지 않았습니다. 구름 설치 후 다시 실행하세요."
+      return 0
+      ;;
+    disabled) ;;
+    *)
+      log_warn "구름 두벌식 입력 소스 상태를 해석하지 못했습니다: $source_state"
+      return 0
+      ;;
+  esac
+
+  log_change "구름 두벌식 입력 소스를 추가합니다."
+  if [ "$DRY_RUN" -eq 1 ]; then
+    return 0
+  fi
+
+  backup_defaults_domain com.apple.HIToolbox hitoolbox-before-gureum.plist || return 0
+  source_state="$(/usr/bin/swift "$GUREUM_HELPER" enable 2>&1)"
+  source_status=$?
+  if [ "$source_status" -ne 0 ]; then
+    log_warn "구름 두벌식 입력 소스를 추가하지 못했습니다: $source_state"
+    return 0
+  fi
+  source_state="${source_state##*$'\n'}"
+  if [ "$source_state" = "enabled" ]; then
+    log_ok "구름 두벌식 입력 소스 목록 저장 확인"
+  else
+    log_warn "구름 두벌식 활성화 명령 후 입력 소스 목록에서 확인하지 못했습니다. 로그아웃 후 다시 확인하세요."
+  fi
+}
 
 inspect_hotkeys() {
   /usr/bin/osascript -l JavaScript "$HOTKEY_HELPER" inspect 2>&1
@@ -204,6 +259,8 @@ configure_screenshot_clipboard_shortcut() {
 
 configure_input_environment() {
   section "한글 입력과 단축키"
+
+  configure_gureum_han2
 
   if [ ! -x /usr/bin/osascript ]; then
     log_warn "osascript를 사용할 수 없어 입력 환경 자동화를 건너뜁니다."
