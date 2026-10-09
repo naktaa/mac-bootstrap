@@ -3,78 +3,67 @@
 import Carbon
 import Foundation
 
-let inputSourceID = "org.youknowone.inputmethod.Gureum.han2"
+let bundleID = "org.youknowone.inputmethod.Gureum"
+let inputSourceID = "\(bundleID).han2"
 let command = CommandLine.arguments.dropFirst().first ?? "status"
 
-guard command == "status" || command == "enable" else {
-    fputs("usage: gureum-input-source.swift [status|enable]\n", stderr)
-    exit(2)
-}
-
-guard let sources = TISCreateInputSourceList(nil, true)?.takeRetainedValue() as? [TISInputSource] else {
-    fputs("입력 소스 목록을 읽지 못했습니다.\n", stderr)
+func fail(_ message: String) -> Never {
+    fputs("\(message)\n", stderr)
     exit(1)
 }
 
-let source = sources.first { candidate in
-    guard let property = TISGetInputSourceProperty(candidate, kTISPropertyInputSourceID) else {
+guard command == "status" || command == "enable" else {
+    fail("usage: gureum-input-source.swift [status|enable]")
+}
+
+func findSource() -> TISInputSource? {
+    let filter = [kTISPropertyInputSourceID as String: inputSourceID] as CFDictionary
+    guard let sources = TISCreateInputSourceList(filter, true)?.takeRetainedValue() as? [TISInputSource] else {
+        return nil
+    }
+    return sources.first
+}
+
+func isEnabled(_ source: TISInputSource) -> Bool {
+    guard let property = TISGetInputSourceProperty(source, kTISPropertyInputSourceIsEnabled) else {
         return false
     }
-    let identifier = Unmanaged<CFString>.fromOpaque(property).takeUnretainedValue() as String
-    return identifier == inputSourceID
+    return CFBooleanGetValue(Unmanaged<CFBoolean>.fromOpaque(property).takeUnretainedValue())
+}
+
+// 설치 직후 아직 등록되지 않은 앱도 찾는다. status에서는 등록하지 않는다.
+let directories = [
+    FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Input Methods"),
+    URL(fileURLWithPath: "/Library/Input Methods")
+]
+let installedBundle = directories.lazy.flatMap { directory in
+    (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+}.first { Bundle(url: $0)?.bundleIdentifier == bundleID }
+
+var source = findSource()
+if source == nil, command == "enable", let location = installedBundle {
+    let result = TISRegisterInputSource(location as CFURL)
+    guard result == noErr else { fail("구름 입력기 등록 실패 (OSStatus \(result)).") }
+    source = findSource()
 }
 
 guard let source else {
-    print("missing")
-    exit(0)
+    print(installedBundle == nil ? "missing" : "unregistered")
+    exit(command == "enable" ? 1 : 0)
 }
 
-func isAdded() -> Bool {
-    let preferences = UserDefaults(suiteName: "com.apple.HIToolbox")
-    let entries = preferences?.array(forKey: "AppleEnabledInputSources") as? [[String: Any]] ?? []
-    return entries.contains { entry in
-        entry["Bundle ID"] as? String == "org.youknowone.inputmethod.Gureum" &&
-        entry["Input Mode"] as? String == inputSourceID
-    }
-}
-
-if command == "enable" && !isAdded() {
+if command == "enable" && !isEnabled(source) {
     let result = TISEnableInputSource(source)
-    guard result == noErr else {
-        fputs("구름 두벌식 활성화 실패 (OSStatus \(result)).\n", stderr)
-        exit(1)
-    }
-    // 입력 소스 설정은 text input service가 비동기로 갱신할 수 있다.
-    for _ in 0..<5 where !isAdded() {
+    guard result == noErr else { fail("구름 두벌식 활성화 실패 (OSStatus \(result)).") }
+    for _ in 0..<10 {
+        if let refreshed = findSource(), isEnabled(refreshed) { break }
         Thread.sleep(forTimeInterval: 0.2)
     }
-
-    // 일부 macOS 버전은 성공을 반환해도 사용자 입력 소스 목록을 갱신하지 않는다.
-    // 그때만 기존 목록에 이 입력 모드를 추가한다.
-    if !isAdded() {
-        guard let preferences = UserDefaults(suiteName: "com.apple.HIToolbox") else {
-            fputs("입력 소스 설정을 열지 못했습니다.\n", stderr)
-            exit(1)
-        }
-        guard var entries = preferences.array(forKey: "AppleEnabledInputSources") as? [[String: Any]] else {
-            fputs("기존 입력 소스 목록을 읽지 못했습니다.\n", stderr)
-            exit(1)
-        }
-        entries.append([
-            "Bundle ID": "org.youknowone.inputmethod.Gureum",
-            "Input Mode": inputSourceID,
-            "InputSourceKind": "Input Mode"
-        ])
-        preferences.set(entries, forKey: "AppleEnabledInputSources")
-        guard preferences.synchronize() else {
-            fputs("입력 소스 설정을 저장하지 못했습니다.\n", stderr)
-            exit(1)
-        }
-    }
 }
 
-let added = isAdded()
-print(added ? "enabled" : "disabled")
-if command == "enable" && !added {
-    exit(1)
+// plist에 항목만 존재하는 경우를 활성화 성공으로 오인하지 않는다.
+let enabled = findSource().map(isEnabled) ?? false
+print(enabled ? "enabled" : "disabled")
+if command == "enable" && !enabled {
+    fail("macOS 입력 서비스에서 활성화를 확인하지 못했습니다. 로그아웃 후 다시 실행하세요.")
 }

@@ -36,7 +36,7 @@ configure_gureum_han2() {
       log_warn "구름 입력기가 설치되지 않았거나 macOS에 등록되지 않았습니다. 구름 설치 후 다시 실행하세요."
       return 0
       ;;
-    disabled) ;;
+    disabled|unregistered) ;;
     *)
       log_warn "구름 두벌식 입력 소스 상태를 해석하지 못했습니다: $source_state"
       return 0
@@ -57,7 +57,7 @@ configure_gureum_han2() {
   fi
   source_state="${source_state##*$'\n'}"
   if [ "$source_state" = "enabled" ]; then
-    log_ok "구름 두벌식 입력 소스 목록 저장 확인"
+    log_ok "macOS 입력 서비스에서 구름 두벌식 활성화 확인"
   else
     log_warn "구름 두벌식 활성화 명령 후 입력 소스 목록에서 확인하지 못했습니다. 로그아웃 후 다시 확인하세요."
   fi

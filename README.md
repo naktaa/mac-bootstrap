@@ -11,13 +11,12 @@
 git clone https://github.com/naktaa/mac-bootstrap.git
 cd mac-bootstrap
 ./setup.sh --dry-run
-./setup.sh && exec /bin/zsh -l
+./setup.sh
 ```
 
 - `--dry-run`: 실제로 변경하지 않고 현재 상태와 변경 예정 항목만 출력
-- 옵션 없는 실행: 설정을 실제 적용
-- `exec /bin/zsh -l`: setup 성공 후 현재 zsh를 새 로그인 셸로 교체하여
-  변경된 alias와 셸 설정을 즉시 반영
+- 옵션 없는 실행: 설정을 실제 적용하고, Terminal에서 성공하면 새 로그인 zsh로 진입
+- `--no-reload-shell`: 설정 적용만 하고 새 셸은 실행하지 않음
 - 두 번째 실행부터는 이미 원하는 상태인 항목을 `[SKIP]` 처리
 
 한 항목이 실패해도 나머지 설정은 계속 진행하며 마지막에 결과를
@@ -31,6 +30,7 @@ cd mac-bootstrap
 |---|---|
 | 마우스 | 자연스러운 스크롤을 꺼서 Windows 방식의 휠 방향 사용 |
 | 키보드 | 빠른 키 반복, 짧은 반복 시작 지연, 자동으로 대문자 시작 끄기 |
+| 화면 | 내장 디스플레이 밝기를 60%로 설정 |
 | 입력 소스 | 구름 입력기가 설치돼 있으면 두벌식 입력 소스를 추가하고 기존 입력 소스는 유지 |
 | 한/영 전환 | Caps Lock을 `fn/지구본`으로 바꿔 입력 소스 전환 |
 | Spotlight | `Command-Space`, `Option-Command-Space` 단축키 해제 |
@@ -102,12 +102,15 @@ commit한다. 다음 Mac에서 `./setup.sh`를 실행하면 수정된 파일이
 # <<< mac-bootstrap <<<
 ```
 
-setup 실행 직후 현재 Terminal에도 바로 반영하려면 setup과 셸 교체를 한 줄로
-실행한다. `setup.sh`는 자식 프로세스이므로 실행 중인 부모 셸의 환경을 직접
-바꿀 수 없다.
+setup이 성공하면 대화형 Terminal에서 자동으로 `exec /bin/zsh -l`을 실행해
+새 셸에 변경된 alias와 설정을 반영한다. setup 프로세스가 새 셸로 교체되므로
+새 셸에서 `exit`하면 기존 부모 셸로 돌아간다. 부모 셸까지 교체하려면 기존처럼
+`./setup.sh --no-reload-shell && exec /bin/zsh -l`을 사용한다.
+`--dry-run`, 오류 발생, 비대화형 실행에서는 새 셸을 열지 않는다.
+`RELOAD_ZSH_AFTER_SETUP=false`로 자동 진입을 끌 수 있다.
 
 ```bash
-./setup.sh && exec /bin/zsh -l
+./setup.sh
 ```
 
 ## Vim 설정 수정 위치
@@ -149,6 +152,7 @@ NATURAL_SCROLLING=false
 KEY_REPEAT=2
 INITIAL_KEY_REPEAT=15
 AUTOMATIC_CAPITALIZATION=false
+DISPLAY_BRIGHTNESS_PERCENT=60
 
 CONFIGURE_GUREUM_HAN2=true
 CONFIGURE_CAPS_LOCK_INPUT_SWITCH=true
@@ -156,6 +160,7 @@ DISABLE_SPOTLIGHT_SHORTCUTS=true
 CONFIGURE_SCREENSHOT_CLIPBOARD_SHORTCUT=true
 
 MANAGE_ZSH=true
+RELOAD_ZSH_AFTER_SETUP=true
 MANAGE_VIM=true
 ```
 
@@ -163,6 +168,15 @@ MANAGE_VIM=true
 macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 `AUTOMATIC_CAPITALIZATION=false`는 시스템 설정의
 `키보드 > 텍스트 입력 > 편집 > 자동으로 대문자 시작` 체크를 해제한다.
+
+## 화면 밝기
+
+`DISPLAY_BRIGHTNESS_PERCENT=60`은 내장 화면 밝기를 약 60%로 설정한다.
+0~100의 정수를 사용하며, 빈 문자열(`""`)이면 현재 밝기를 유지한다.
+Swift와 macOS의 비공개 DisplayServices API를 사용하며 별도 앱은 설치하지 않는다.
+내장 화면이 없거나 API를 지원하지 않으면 경고 후 다음 설정을 진행한다.
+외장 모니터는 제어하지 않는다. 자동 밝기는 변경하지 않으므로 주변 조명에 따라
+실행 이후 밝기가 다시 달라질 수 있다.
 
 ## 한글 입력과 단축키 처리 방식
 
@@ -172,8 +186,10 @@ macOS 설정 UI의 빠른 반복과 짧은 지연에 가까운 값이다.
 이 단계를 끌 수 있다. 구름이 설치돼 있지 않거나 macOS가 입력기를 인식하지
 못하면 경고를 출력하고 나머지 설정을 계속한다. 이 단계에는 Xcode Command
 Line Tools의 Swift가 필요하다. 구름 설치 자체는 자동화하지 않는다. macOS가
-API 호출 후에도 사용자 목록을 갱신하지 않으면 기존 목록에 구름 두벌식 항목을
-추가한다. 메뉴에서 바로 보이지 않으면 로그아웃한 뒤 다시 로그인한다.
+아직 설치된 앱을 등록하지 않았다면 `TISRegisterInputSource`로 등록을 시도한다.
+`TISEnableInputSource` 호출 후 실제 입력 서비스의 활성화 상태를 확인한다.
+plist 목록에 항목만 있다고 성공으로 처리하거나 plist를 직접 추가하지 않는다.
+메뉴에서 바로 보이지 않으면 로그아웃한 뒤 다시 로그인한다.
 
 한/영 전환은 `imac-setup`과 같은 방식으로 구성한다.
 
@@ -234,5 +250,6 @@ API 호출 후에도 사용자 목록을 갱신하지 않으면 기존 목록에
 
 - [Apple: Korean Input Method User Guide](https://support.apple.com/guide/korean-input-method/welcome/mac)
 - [Apple: Third-Party Input Method Management Changes](https://developer.apple.com/library/archive/qa/qa1810/_index.html)
+- [brightness: DisplayServices 밝기 API 구현 참고](https://github.com/nriley/brightness/blob/master/brightness.c)
 - [Gureum: 설치와 입력 소스 추가](https://github.com/gureum/gureum#설치)
 - [Apple: macOS 키보드 단축키 비활성화](https://support.apple.com/guide/mac-help/keyboard-shortcuts-mchlp2262/mac)

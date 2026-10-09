@@ -5,12 +5,14 @@
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(/usr/bin/dirname -- "$0")" && /bin/pwd -P)"
 DRY_RUN=0
+NO_RELOAD_SHELL=0
 
 usage() {
   cat <<'EOF'
-사용법: ./setup.sh [--dry-run] [--help]
+사용법: ./setup.sh [--dry-run] [--no-reload-shell] [--help]
 
   --dry-run  실제 파일과 시스템 설정을 변경하지 않고 예정 작업만 출력
+  --no-reload-shell  설정 적용 후 새 zsh를 실행하지 않음
   --help     도움말 출력
 EOF
 }
@@ -18,6 +20,7 @@ EOF
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --dry-run) DRY_RUN=1 ;;
+    --no-reload-shell) NO_RELOAD_SHELL=1 ;;
     --help|-h) usage; exit 0 ;;
     *) printf '[ERROR] 알 수 없는 옵션: %s\n' "$1" >&2; usage; exit 2 ;;
   esac
@@ -51,6 +54,7 @@ validate_config() {
     "DISABLE_SPOTLIGHT_SHORTCUTS:$DISABLE_SPOTLIGHT_SHORTCUTS" \
     "CONFIGURE_SCREENSHOT_CLIPBOARD_SHORTCUT:$CONFIGURE_SCREENSHOT_CLIPBOARD_SHORTCUT" \
     "MANAGE_ZSH:$MANAGE_ZSH" \
+    "RELOAD_ZSH_AFTER_SETUP:$RELOAD_ZSH_AFTER_SETUP" \
     "MANAGE_VIM:$MANAGE_VIM"
   do
     name="${entry%%:*}"
@@ -60,6 +64,14 @@ validate_config() {
 
   validate_integer "KEY_REPEAT" "$KEY_REPEAT" || validation_failed=1
   validate_integer "INITIAL_KEY_REPEAT" "$INITIAL_KEY_REPEAT" || validation_failed=1
+  if [ -n "$DISPLAY_BRIGHTNESS_PERCENT" ]; then
+    if ! validate_integer "DISPLAY_BRIGHTNESS_PERCENT" "$DISPLAY_BRIGHTNESS_PERCENT"; then
+      validation_failed=1
+    elif [ "$DISPLAY_BRIGHTNESS_PERCENT" -gt 100 ]; then
+      log_error "DISPLAY_BRIGHTNESS_PERCENT는 0~100이어야 합니다."
+      validation_failed=1
+    fi
+  fi
 
   [ "$validation_failed" -eq 0 ]
 }
@@ -82,6 +94,7 @@ if [ "$DRY_RUN" -eq 1 ]; then
 fi
 
 configure_core_macos
+configure_display_brightness
 configure_input_environment
 configure_shell
 configure_vim
@@ -90,12 +103,13 @@ apply_system_changes
 
 print_summary
 
-if [ "$DRY_RUN" -eq 0 ] && is_true "$MANAGE_ZSH"; then
-  printf '\n현재 Terminal의 zsh 설정까지 반영하려면 현재 셸을 교체하세요:\n'
-  printf '  exec /bin/zsh -l\n'
-fi
-
 if [ "$ERROR_COUNT" -gt 0 ]; then
   exit 1
+fi
+if [ "$DRY_RUN" -eq 0 ] && [ "$NO_RELOAD_SHELL" -eq 0 ] && \
+   is_true "$MANAGE_ZSH" && is_true "$RELOAD_ZSH_AFTER_SETUP" && \
+   [ -t 0 ] && [ -t 1 ]; then
+  printf '\n새 로그인 zsh를 시작합니다. exit하면 이전 셸로 돌아갑니다.\n'
+  exec /bin/zsh -l
 fi
 exit 0

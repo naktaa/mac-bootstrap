@@ -22,6 +22,9 @@ INITIAL_KEY_REPEAT=15
 # 키보드 텍스트 입력 설정의 "자동으로 대문자 시작"을 끈다.
 AUTOMATIC_CAPITALIZATION=false
 
+# 내장 화면 밝기를 0~100%로 설정한다. 빈 문자열이면 현재 밝기를 유지한다.
+DISPLAY_BRIGHTNESS_PERCENT=60
+
 # 구름 입력기가 이미 설치된 경우 두벌식 입력 소스를 추가한다.
 CONFIGURE_GUREUM_HAN2=true
 
@@ -38,6 +41,10 @@ CONFIGURE_SCREENSHOT_CLIPBOARD_SHORTCUT=true
 
 # 관리되는 zsh 설정을 ~/.zshrc에서 불러오도록 구성한다.
 MANAGE_ZSH=true
+
+# 성공한 대화형 Terminal 실행 후 새 로그인 zsh로 자동 진입한다.
+# 새 셸에서 exit하면 setup을 실행했던 부모 셸로 돌아간다.
+RELOAD_ZSH_AFTER_SETUP=true
 
 # 관리되는 Vim 설정을 ~/.vimrc에서 불러오도록 구성한다.
 MANAGE_VIM=true

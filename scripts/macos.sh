@@ -35,6 +35,39 @@ configure_core_macos() {
     "$AUTOMATIC_CAPITALIZATION" "자동으로 대문자 시작"
 }
 
+configure_display_brightness() {
+  section "화면 밝기"
+  if [ -z "$DISPLAY_BRIGHTNESS_PERCENT" ]; then
+    log_skip "화면 밝기: config에서 유지"
+    return 0
+  fi
+  if [ ! -x /usr/bin/swift ]; then
+    log_warn "Swift를 사용할 수 없어 화면 밝기를 설정하지 못했습니다."
+    return 0
+  fi
+
+  local helper="$SCRIPT_DIR/scripts/helpers/display-brightness.swift"
+  local result
+  result="$(/usr/bin/swift "$helper" status 2>&1)"
+  if [ "$?" -ne 0 ]; then
+    log_warn "화면 밝기 확인 실패: $result"
+    return 0
+  fi
+  local current="${result##*$'\n'}"
+  if numeric_equal "$current" "$DISPLAY_BRIGHTNESS_PERCENT"; then
+    log_skip "내장 화면 밝기: 이미 ${DISPLAY_BRIGHTNESS_PERCENT}%"
+    return 0
+  fi
+  log_change "내장 화면 밝기: ${current}% -> ${DISPLAY_BRIGHTNESS_PERCENT}%"
+  [ "$DRY_RUN" -eq 0 ] || return 0
+  result="$(/usr/bin/swift "$helper" set "$DISPLAY_BRIGHTNESS_PERCENT" 2>&1)"
+  if [ "$?" -ne 0 ]; then
+    log_warn "화면 밝기 설정 실패: $result"
+  else
+    log_ok "내장 화면 밝기 ${DISPLAY_BRIGHTNESS_PERCENT}% 적용 확인"
+  fi
+}
+
 apply_system_changes() {
   section "설정 반영"
 
