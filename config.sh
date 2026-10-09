@@ -32,6 +32,10 @@ CONFIGURE_GUREUM_HAN2=true
 # Caps Lock 본래의 대문자 잠금 기능은 사용하지 않는다.
 CONFIGURE_CAPS_LOCK_INPUT_SWITCH=true
 
+# Caps Lock(fn) 연타로 받아쓰기 활성화 안내가 뜨지 않도록 단축키를 해제한다.
+# 해제 값을 저장하지 못하면 Control-Option-Shift-Command-F12로 변경을 시도한다.
+DISABLE_DICTATION_SHORTCUT=true
+
 # Spotlight 검색(Command-Space)과 Finder 검색 창
 # (Option-Command-Space) 단축키를 비활성화한다.
 DISABLE_SPOTLIGHT_SHORTCUTS=true

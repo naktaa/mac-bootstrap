@@ -96,7 +96,10 @@ function inspect() {
     'SCREENSHOT_CLIPBOARD_PARAMETERS=' + parametersState(root, 31),
     'SCREENSHOT_CLIPBOARD_TYPE=' + typeState(root, 31),
     'SPOTLIGHT_64_ENABLED=' + enabledState(root, 64),
-    'SPOTLIGHT_65_ENABLED=' + enabledState(root, 65)
+    'SPOTLIGHT_65_ENABLED=' + enabledState(root, 65),
+    'DICTATION_ENABLED=' + enabledState(root, 164),
+    'DICTATION_PARAMETERS=' + parametersState(root, 164),
+    'DICTATION_TYPE=' + typeState(root, 164)
   ].join('\n');
 }
 
@@ -187,6 +190,26 @@ function configureScreenshotClipboard() {
   return inspect();
 }
 
+function configureDictation(fallback) {
+  const root = mutableRoot();
+  const entry = mutableEntry(root, 164);
+  entry.setObjectForKey($.NSNumber.numberWithBool(fallback), $('enabled'));
+  if (fallback) {
+    const value = $.NSMutableDictionary.dictionary;
+    const parameters = $.NSMutableArray.array;
+    // 문자 없음, F12 키 코드, Control | Option | Shift | Command.
+    [65535, 111, 1966080].forEach(function (parameter) {
+      parameters.addObject($.NSNumber.numberWithInt(parameter));
+    });
+    value.setObjectForKey(parameters, $('parameters'));
+    value.setObjectForKey($('standard'), $('type'));
+    entry.setObjectForKey(value, $('value'));
+  }
+  root.setObjectForKey(entry, $('164'));
+  save(root);
+  return inspect();
+}
+
 function run(arguments) {
   const action = arguments.length > 0 ? String(arguments[0]) : 'inspect';
   if (action === 'inspect') {
@@ -200,6 +223,12 @@ function run(arguments) {
   }
   if (action === 'configure-screenshot-clipboard') {
     return configureScreenshotClipboard();
+  }
+  if (action === 'disable-dictation') {
+    return configureDictation(false);
+  }
+  if (action === 'fallback-dictation') {
+    return configureDictation(true);
   }
   throw new Error('지원하지 않는 action: ' + action);
 }

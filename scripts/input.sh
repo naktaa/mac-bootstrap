@@ -179,6 +179,58 @@ configure_caps_lock_input_switch() {
   fi
 }
 
+configure_dictation_shortcut() {
+  if ! is_true "$DISABLE_DICTATION_SHORTCUT"; then
+    log_skip "받아쓰기 단축키: config에서 유지"
+    return 0
+  fi
+  local state="$1"
+  local auto_enable_ok=0
+  if default_read com.apple.HIToolbox AppleDictationAutoEnable && [ "$DEFAULT_VALUE" = "0" ]; then
+    auto_enable_ok=1
+  fi
+  if [ "$auto_enable_ok" -eq 1 ] && \
+     printf '%s\n' "$state" | /usr/bin/grep -Fqx 'DICTATION_ENABLED=false'; then
+    log_skip "받아쓰기 단축키와 활성화 안내: 이미 해제됨"
+    return 0
+  fi
+
+  log_change "받아쓰기 단축키와 fn 연타 활성화 안내를 해제합니다."
+  [ "$DRY_RUN" -eq 0 ] || return 0
+  ensure_hotkey_backup || return 0
+  backup_defaults_domain com.apple.HIToolbox hitoolbox-before-dictation.plist || return 0
+  SHORTCUTS_CHANGED=1
+
+  if [ "$auto_enable_ok" -eq 0 ]; then
+    if ! /usr/bin/defaults write com.apple.HIToolbox AppleDictationAutoEnable -int 0; then
+      log_warn "받아쓰기 자동 활성화 안내 설정을 저장하지 못했습니다."
+    fi
+  fi
+
+  local result
+  result="$(/usr/bin/osascript -l JavaScript "$HOTKEY_HELPER" disable-dictation 2>&1)"
+  if [ "$?" -eq 0 ] && \
+     printf '%s\n' "$result" | /usr/bin/grep -Fqx 'DICTATION_ENABLED=false'; then
+    log_ok "받아쓰기 단축키 해제 저장 확인"
+  else
+    log_warn "받아쓰기 단축키 해제를 확인하지 못해 대체 조합으로 변경합니다: $result"
+    result="$(/usr/bin/osascript -l JavaScript "$HOTKEY_HELPER" fallback-dictation 2>&1)"
+    if [ "$?" -eq 0 ] && \
+       printf '%s\n' "$result" | /usr/bin/grep -Fqx 'DICTATION_ENABLED=true' && \
+       printf '%s\n' "$result" | /usr/bin/grep -Fqx 'DICTATION_TYPE=standard' && \
+       printf '%s\n' "$result" | /usr/bin/grep -Fqx 'DICTATION_PARAMETERS=65535,111,1966080'; then
+      log_ok "받아쓰기 단축키: Control-Option-Shift-Command-F12 저장 확인"
+    else
+      log_error "받아쓰기 단축키 해제와 대체 조합 설정에 실패했습니다: $result"
+    fi
+  fi
+  if default_read com.apple.HIToolbox AppleDictationAutoEnable && [ "$DEFAULT_VALUE" = "0" ]; then
+    log_ok "받아쓰기 자동 활성화 안내 해제 저장 확인"
+  else
+    log_warn "받아쓰기 자동 활성화 안내 해제를 확인하지 못했습니다."
+  fi
+}
+
 configure_spotlight_shortcuts() {
   if ! is_true "$DISABLE_SPOTLIGHT_SHORTCUTS"; then
     log_skip "Spotlight 단축키: config에서 유지"
@@ -284,4 +336,5 @@ configure_input_environment() {
 
   configure_spotlight_shortcuts "$hotkey_state"
   configure_screenshot_clipboard_shortcut "$hotkey_state"
+  configure_dictation_shortcut "$hotkey_state"
 }

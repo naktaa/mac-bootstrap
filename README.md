@@ -33,6 +33,7 @@ cd mac-bootstrap
 | 화면 | 내장 디스플레이 밝기를 60%로 설정 |
 | 입력 소스 | 구름 입력기가 설치돼 있으면 두벌식 입력 소스를 추가하고 기존 입력 소스는 유지 |
 | 한/영 전환 | Caps Lock을 `fn/지구본`으로 바꿔 입력 소스 전환 |
+| 받아쓰기 | 단축키와 fn 연타 활성화 안내 해제, 해제 저장 실패 시 드문 조합으로 변경 |
 | Spotlight | `Command-Space`, `Option-Command-Space` 단축키 해제 |
 | 스크린샷 | `Control-Shift-S`로 선택 영역을 캡처해 클립보드에 복사 |
 | zsh | history, prompt와 자주 사용하는 alias 적용 |
@@ -156,6 +157,7 @@ DISPLAY_BRIGHTNESS_PERCENT=60
 
 CONFIGURE_GUREUM_HAN2=true
 CONFIGURE_CAPS_LOCK_INPUT_SWITCH=true
+DISABLE_DICTATION_SHORTCUT=true
 DISABLE_SPOTLIGHT_SHORTCUTS=true
 CONFIGURE_SCREENSHOT_CLIPBOARD_SHORTCUT=true
 
@@ -202,6 +204,13 @@ plist 목록에 항목만 있다고 성공으로 처리하거나 plist를 직접
 `ABC`와 구름 두벌식뿐이면 두 입력기 사이를 전환한다. 실제 `fn/지구본` 키도
 입력 소스 변경으로 동작한다. Caps Lock 본래의 대문자 잠금 기능은 사용할 수 없다.
 
+받아쓰기 단축키(symbolic hotkey ID `164`)는 비활성화하고,
+`AppleDictationAutoEnable=0`으로 fn 연타 시 활성화 안내도 억제한다.
+단축키 해제 값을 저장한 뒤 확인하지 못하면 `Control-Option-Shift-Command-F12`로
+변경을 시도한다. 현재 Caps Lock 한/영 전환은 유지한다.
+`DISABLE_DICTATION_SHORTCUT=false`로 이 단계를 끌 수 있다.
+검증은 설정 저장값을 확인하며, 즉시 반영되지 않으면 로그아웃 후 다시 로그인한다.
+
 키보드별 modifier 배열은 Caps Lock에서 fn으로 가는 단일 매핑으로 저장한다.
 같은 키보드에 별도의 사용자 지정 modifier 매핑이 있다면 교체된다.
 
@@ -233,6 +242,7 @@ plist 목록에 항목만 있다고 성공으로 처리하거나 plist를 직접
 
 - `hitoolbox-before-caps-lock.plist`
 - `hitoolbox-before-gureum.plist`
+- `hitoolbox-before-dictation.plist`
 - `current-host-global-preferences.plist`
 - `symbolic-hotkeys.plist`
 - `zshrc.before-bootstrap`
