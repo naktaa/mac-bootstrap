@@ -23,7 +23,7 @@ INITIAL_KEY_REPEAT=15
 AUTOMATIC_CAPITALIZATION=false
 
 # 내장 화면 밝기를 0~100%로 설정한다. 빈 문자열이면 현재 밝기를 유지한다.
-DISPLAY_BRIGHTNESS_PERCENT=60
+DISPLAY_BRIGHTNESS_PERCENT=90
 
 # 구름 입력기가 이미 설치된 경우 두벌식 입력 소스를 추가한다.
 CONFIGURE_GUREUM_HAN2=true
