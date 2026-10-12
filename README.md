@@ -184,12 +184,15 @@ Swift와 macOS의 비공개 DisplayServices API를 사용하며 별도 앱은 �
 
 구름 입력기 앱이 이미 설치돼 있으면 macOS 입력 소스 API로 구름 두벌식
 (`org.youknowone.inputmethod.Gureum.han2`)을 추가한다. 기존 입력 소스는
-유지하며, 이미 추가됐다면 건너뛴다. `CONFIGURE_GUREUM_HAN2=false`로
+유지하며, 상위 구름 입력기와 두벌식 모드가 모두 활성화돼 있으면 건너뛴다.
+`CONFIGURE_GUREUM_HAN2=false`로
 이 단계를 끌 수 있다. 구름이 설치돼 있지 않거나 macOS가 입력기를 인식하지
 못하면 경고를 출력하고 나머지 설정을 계속한다. 이 단계에는 Xcode Command
 Line Tools의 Swift가 필요하다. 구름 설치 자체는 자동화하지 않는다. macOS가
 아직 설치된 앱을 등록하지 않았다면 `TISRegisterInputSource`로 등록을 시도한다.
-`TISEnableInputSource` 호출 후 실제 입력 서비스의 활성화 상태를 확인한다.
+`TISEnableInputSource`로 상위 구름 입력기를 먼저 활성화한 뒤 두벌식 모드를
+활성화한다. 상위 입력 소스는 앱의 Bundle ID와 입력기 타입으로 찾는다.
+두 호출의 반환 코드로 오류를 처리하며, 활성화 후 반복 조회는 하지 않는다.
 plist 목록에 항목만 있다고 성공으로 처리하거나 plist를 직접 추가하지 않는다.
 메뉴에서 바로 보이지 않으면 로그아웃한 뒤 다시 로그인한다.
 

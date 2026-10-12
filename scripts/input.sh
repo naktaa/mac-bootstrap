@@ -29,7 +29,7 @@ configure_gureum_han2() {
   source_state="${source_state##*$'\n'}"
   case "$source_state" in
     enabled)
-      log_skip "구름 두벌식 입력 소스: 이미 추가됨"
+      log_skip "구름 입력기와 두벌식 입력 소스: 이미 활성화됨"
       return 0
       ;;
     missing)
@@ -43,7 +43,7 @@ configure_gureum_han2() {
       ;;
   esac
 
-  log_change "구름 두벌식 입력 소스를 추가합니다."
+  log_change "구름 입력기와 두벌식 입력 소스를 순서대로 활성화합니다."
   if [ "$DRY_RUN" -eq 1 ]; then
     return 0
   fi
@@ -57,9 +57,9 @@ configure_gureum_han2() {
   fi
   source_state="${source_state##*$'\n'}"
   if [ "$source_state" = "enabled" ]; then
-    log_ok "macOS 입력 서비스에서 구름 두벌식 활성화 확인"
+    log_ok "구름 입력기와 두벌식 활성화 요청 완료"
   else
-    log_warn "구름 두벌식 활성화 명령 후 입력 소스 목록에서 확인하지 못했습니다. 로그아웃 후 다시 확인하세요."
+    log_warn "구름 입력기와 두벌식 활성화 명령의 결과를 해석하지 못했습니다: $source_state"
   fi
 }
 
