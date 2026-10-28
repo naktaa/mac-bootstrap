@@ -39,8 +39,43 @@ cd mac-bootstrap
 | zsh | history, prompt와 자주 사용하는 alias 적용 |
 | Vim | 줄 번호, 4칸 Tab·들여쓰기, 상태 줄, cindent, syntax 적용 |
 | Git | global 이름, 이메일, 기본 branch 적용 |
+| GitHub SSH | 다운로드한 개인키 설치, 권한 설정, macOS Agent·Keychain 등록 |
 
-SSH, VS Code, Docker, Homebrew, 응용프로그램 설치는 자동화하지 않는다.
+VS Code, Docker, Homebrew, 응용프로그램 설치는 자동화하지 않는다.
+
+## 매주 초기화 후 GitHub SSH 사용
+
+1. GitHub 계정에 공개키가 이미 등록된 개인키를 `~/Downloads/id_ed25519`로 다운로드한다.
+2. macOS에서 `./setup.sh`를 실행한다.
+3. OrbStack을 실행하고 Linux Machine을 수동으로 생성한다.
+4. Linux Machine에서 Linux-bootstrap의 `./install.sh`를 실행한다.
+5. GitHub clone/push를 사용한다. Linux에서는 `https://github.com/` 주소도 SSH로 변환된다.
+
+macOS setup은 `~/.ssh/id_ed25519`가 없을 때만 다운로드한 키를 복사한다.
+기존 키는 덮어쓰지 않으며, `~/.ssh`는 700, 개인키는 600으로 설정한다.
+`~/.ssh/config`의 기존 내용과 OrbStack Include를 보존하고 GitHub 전용
+`AddKeysToAgent yes`, `UseKeychain yes`, `IdentityFile ~/.ssh/id_ed25519` 블록을
+한 번만 추가한다. 기존 설정이 `AddKeysToAgent`보다 우선하면 경고한다.
+Apple 기본 `/usr/bin/ssh-add --apple-use-keychain`으로 Agent에 등록하며,
+암호화된 키는 최초 등록 시 암호 입력이 필요할 수 있다.
+키가 없으면 안내만 출력하고, SSH 설정이나 Agent 등록이 실패해도 나머지 작업은 계속한다.
+`--dry-run`에서는 키 복사·설정 변경·Agent 등록을 실행하지 않는다.
+
+[OrbStack은 macOS SSH Agent를 Linux Machine에 자동 전달한다](https://docs.orbstack.dev/machines/ssh#agent-forwarding).
+별도의 `ForwardAgent` 설정이나 Linux 개인키 복사·생성은 필요 없다.
+macOS SSH 설정과 Linux Git URL 변환은 각 부트스트랩이 독립적으로 처리한다.
+
+필요할 때 macOS와 Linux에서 다음 명령으로 확인한다.
+
+```bash
+ssh-add -l
+ssh -T git@github.com
+```
+
+첫 GitHub 접속에서는 호스트 키 확인이 나올 수 있다.
+`Hi ...! You've successfully authenticated`가 나오면 인증 성공이다
+(GitHub는 셸을 제공하지 않아 이 경우에도 종료 코드 1을 반환한다).
+Linux의 `ssh-add -l`에 키가 없으면 macOS에서 Agent 등록 결과를 먼저 확인한다.
 
 ## Git 이름과 이메일 설정 위치
 

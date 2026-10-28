@@ -42,6 +42,7 @@ fi
 . "$SCRIPT_DIR/scripts/macos.sh"
 . "$SCRIPT_DIR/scripts/input.sh"
 . "$SCRIPT_DIR/scripts/shell-git.sh"
+. "$SCRIPT_DIR/scripts/ssh.sh"
 
 validate_config() {
   validation_failed=0
@@ -100,6 +101,7 @@ configure_input_environment
 configure_shell
 configure_vim
 configure_git
+configure_github_ssh
 apply_system_changes
 
 print_summary
