@@ -3,6 +3,7 @@
 # 모든 스크립트가 공유하는 출력, 비교, dry-run, 백업 함수다.
 
 CHANGE_COUNT=0
+DONE_COUNT=0
 SKIP_COUNT=0
 OK_COUNT=0
 WARN_COUNT=0
@@ -11,47 +12,125 @@ SHORTCUTS_CHANGED=0
 SYSTEM_SETTINGS_CHANGED=0
 BACKUP_DIR=""
 
+# 섹션별 결과를 모아 실행 요약에 표시한다.
+SECTION_NAMES=()
+SECTION_RESULTS=()
+CURRENT_SECTION=""
+SEC_CHANGE=0
+SEC_DONE=0
+SEC_SKIP=0
+SEC_WARN=0
+SEC_ERROR=0
+
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   COLOR_GREEN='\033[32m'
   COLOR_YELLOW='\033[33m'
   COLOR_RED='\033[31m'
   COLOR_CYAN='\033[36m'
+  COLOR_DIM='\033[2m'
+  COLOR_BOLD='\033[1m'
   COLOR_RESET='\033[0m'
 else
   COLOR_GREEN=''
   COLOR_YELLOW=''
   COLOR_RED=''
   COLOR_CYAN=''
+  COLOR_DIM=''
+  COLOR_BOLD=''
   COLOR_RESET=''
 fi
 
-log_ok() {
-  OK_COUNT=$((OK_COUNT + 1))
-  printf '%b[OK]%b %s\n' "$COLOR_GREEN" "$COLOR_RESET" "$*"
+# 라벨은 터미널 표시 폭 6칸으로 맞춘다(한글 1자 = 2칸).
+# 상태 열 폭: 들여쓰기 2 + 기호 1 + 공백 1 + 라벨 6 + 공백 2 = 12
+DETAIL_INDENT='            '
+DIVIDER='────────────────────────────────────────────────'
+
+print_status_line() {
+  # $1=색 $2=기호 $3=라벨(6칸) $4=메시지
+  printf '  %b%s %s%b  %s\n' "$1" "$2" "$3" "$COLOR_RESET" "$4"
 }
 
+# 이미 원하는 상태인 항목
+log_done() {
+  DONE_COUNT=$((DONE_COUNT + 1))
+  SEC_DONE=$((SEC_DONE + 1))
+  print_status_line "$COLOR_GREEN" '✔' '설정됨' "$*"
+}
+
+# 변경 예정(dry-run) 또는 변경하는 항목. 결과는 log_ok/log_warn/log_error로 이어진다.
 log_change() {
   CHANGE_COUNT=$((CHANGE_COUNT + 1))
-  printf '%b[CHANGE]%b %s\n' "$COLOR_CYAN" "$COLOR_RESET" "$*"
+  SEC_CHANGE=$((SEC_CHANGE + 1))
+  if [ "${DRY_RUN:-0}" -eq 1 ]; then
+    print_status_line "$COLOR_CYAN" '➜' '예정  ' "$*"
+  else
+    print_status_line "$COLOR_CYAN" '➜' '변경  ' "$*"
+  fi
 }
 
+# config에서 끄거나 조건이 맞지 않아 실행하지 않은 항목
 log_skip() {
   SKIP_COUNT=$((SKIP_COUNT + 1))
-  printf '[SKIP] %s\n' "$*"
+  SEC_SKIP=$((SEC_SKIP + 1))
+  print_status_line "$COLOR_DIM" '–' '제외  ' "$*"
 }
 
 log_warn() {
   WARN_COUNT=$((WARN_COUNT + 1))
-  printf '%b[WARN]%b %s\n' "$COLOR_YELLOW" "$COLOR_RESET" "$*"
+  SEC_WARN=$((SEC_WARN + 1))
+  print_status_line "$COLOR_YELLOW" '!' '경고  ' "$*"
 }
 
 log_error() {
   ERROR_COUNT=$((ERROR_COUNT + 1))
-  printf '%b[ERROR]%b %s\n' "$COLOR_RED" "$COLOR_RESET" "$*" >&2
+  SEC_ERROR=$((SEC_ERROR + 1))
+  print_status_line "$COLOR_RED" '✖' '실패  ' "$*" >&2
+}
+
+# 직전 항목에 딸린 적용·검증 성공 결과
+log_ok() {
+  OK_COUNT=$((OK_COUNT + 1))
+  printf '%s%b└ ✔ %s%b\n' "$DETAIL_INDENT" "$COLOR_GREEN" "$*" "$COLOR_RESET"
+}
+
+# 직전 항목에 딸린 참고 정보(백업 위치 등)
+log_detail() {
+  printf '%s%b└ %s%b\n' "$DETAIL_INDENT" "$COLOR_DIM" "$*" "$COLOR_RESET"
+}
+
+print_header() {
+  printf '\n%b▶ %s%b\n' "$COLOR_BOLD" "$1" "$COLOR_RESET"
+  printf '%b%s%b\n' "$COLOR_DIM" "$DIVIDER" "$COLOR_RESET"
+}
+
+close_section() {
+  [ -n "$CURRENT_SECTION" ] || return 0
+  local result
+  if [ "$SEC_ERROR" -gt 0 ]; then
+    result="error:$SEC_ERROR"
+  elif [ "$SEC_WARN" -gt 0 ]; then
+    result="warn:$SEC_WARN"
+  elif [ "$SEC_CHANGE" -gt 0 ]; then
+    result="change:$SEC_CHANGE"
+  elif [ "$SEC_DONE" -gt 0 ]; then
+    result="done:$SEC_DONE"
+  else
+    result="skip:$SEC_SKIP"
+  fi
+  SECTION_NAMES+=("$CURRENT_SECTION")
+  SECTION_RESULTS+=("$result")
+  CURRENT_SECTION=""
+  SEC_CHANGE=0
+  SEC_DONE=0
+  SEC_SKIP=0
+  SEC_WARN=0
+  SEC_ERROR=0
 }
 
 section() {
-  printf '\n=== %s ===\n' "$1"
+  close_section
+  CURRENT_SECTION="$1"
+  print_header "$1"
 }
 
 is_true() {
@@ -121,7 +200,7 @@ apply_default_bool() {
   fi
 
   if [ "$current" = "$desired" ]; then
-    log_skip "$label: 이미 $desired"
+    log_done "$label: $desired"
     return 0
   fi
 
@@ -158,7 +237,7 @@ apply_default_number() {
   fi
 
   if [ "$current" != "미설정(시스템 기본값)" ] && numeric_equal "$current" "$desired"; then
-    log_skip "$label: 이미 $desired"
+    log_done "$label: $desired"
     return 0
   fi
 
@@ -205,7 +284,7 @@ backup_file() {
     log_error "파일 백업에 실패했습니다: $source_file"
     return 1
   }
-  log_ok "백업 생성: $BACKUP_DIR/$backup_name"
+  log_detail "백업 생성: $BACKUP_DIR/$backup_name"
 }
 
 backup_defaults_domain() {
@@ -214,7 +293,7 @@ backup_defaults_domain() {
   [ "$DRY_RUN" -eq 0 ] || return 0
   ensure_backup_dir || return 1
   if /usr/bin/defaults export "$domain" "$BACKUP_DIR/$backup_name" >/dev/null 2>&1; then
-    log_ok "설정 백업 생성: $BACKUP_DIR/$backup_name"
+    log_detail "설정 백업 생성: $BACKUP_DIR/$backup_name"
     return 0
   fi
   log_warn "$domain 설정이 아직 없어 백업을 만들지 못했습니다."
@@ -227,7 +306,7 @@ backup_current_host_defaults_domain() {
   [ "$DRY_RUN" -eq 0 ] || return 0
   ensure_backup_dir || return 1
   if /usr/bin/defaults -currentHost export "$domain" "$BACKUP_DIR/$backup_name" >/dev/null 2>&1; then
-    log_ok "현재 호스트 설정 백업 생성: $BACKUP_DIR/$backup_name"
+    log_detail "현재 호스트 설정 백업 생성: $BACKUP_DIR/$backup_name"
     return 0
   fi
   log_warn "$domain 현재 호스트 설정이 아직 없어 백업을 만들지 못했습니다."
@@ -235,13 +314,54 @@ backup_current_host_defaults_domain() {
 }
 
 print_summary() {
-  section "실행 요약"
-  printf '변경 예정/적용 : %s\n' "$CHANGE_COUNT"
-  printf '이미 설정됨     : %s\n' "$SKIP_COUNT"
-  printf '확인 완료       : %s\n' "$OK_COUNT"
-  printf '경고            : %s\n' "$WARN_COUNT"
-  printf '오류            : %s\n' "$ERROR_COUNT"
+  close_section
+  print_header "실행 요약"
+
+  local i name result kind count pad
+  for (( i = 1; i <= ${#SECTION_NAMES}; i++ )); do
+    name="${SECTION_NAMES[i]}"
+    result="${SECTION_RESULTS[i]}"
+    kind="${result%%:*}"
+    count="${result#*:}"
+    # 한글 폭을 고려해 섹션 이름을 24칸으로 맞춘다.
+    pad=$(( 24 - ${(m)#name} ))
+    [ "$pad" -ge 1 ] || pad=1
+    printf '  %s%*s' "$name" "$pad" ''
+    case "$kind" in
+      error)  printf '%b✖ 실패 (%s건)%b\n' "$COLOR_RED" "$count" "$COLOR_RESET" ;;
+      warn)   printf '%b! 경고 (%s건)%b\n' "$COLOR_YELLOW" "$count" "$COLOR_RESET" ;;
+      change)
+        if [ "${DRY_RUN:-0}" -eq 1 ]; then
+          printf '%b➜ 변경 예정 (%s건)%b\n' "$COLOR_CYAN" "$count" "$COLOR_RESET"
+        else
+          printf '%b✔ 성공 (변경 %s건)%b\n' "$COLOR_GREEN" "$count" "$COLOR_RESET"
+        fi
+        ;;
+      done)   printf '%b✔ 성공%b\n' "$COLOR_GREEN" "$COLOR_RESET" ;;
+      *)      printf '%b– 제외%b\n' "$COLOR_DIM" "$COLOR_RESET" ;;
+    esac
+  done
+
+  local change_label='변경'
+  [ "${DRY_RUN:-0}" -eq 0 ] || change_label='변경 예정'
+  printf '\n  %s %s · 설정됨 %s · 제외 %s · 경고 %s · 실패 %s\n' \
+    "$change_label" "$CHANGE_COUNT" "$DONE_COUNT" "$SKIP_COUNT" "$WARN_COUNT" "$ERROR_COUNT"
   if [ -n "$BACKUP_DIR" ]; then
-    printf '백업 위치       : %s\n' "$BACKUP_DIR"
+    printf '  백업 위치: %s\n' "$BACKUP_DIR"
+  fi
+
+  printf '\n'
+  if [ "$ERROR_COUNT" -gt 0 ]; then
+    printf '  %b%b✖ 실패 %s건이 있습니다. 위의 ✖ 항목을 확인하세요.%b\n' \
+      "$COLOR_BOLD" "$COLOR_RED" "$ERROR_COUNT" "$COLOR_RESET"
+  elif [ "$WARN_COUNT" -gt 0 ]; then
+    printf '  %b%b! 경고 %s건과 함께 완료했습니다. 위의 ! 항목을 확인하세요.%b\n' \
+      "$COLOR_BOLD" "$COLOR_YELLOW" "$WARN_COUNT" "$COLOR_RESET"
+  elif [ "${DRY_RUN:-0}" -eq 1 ]; then
+    printf '  %b%b➜ DRY RUN 완료: 변경 예정 %s건 (실제로 바꾼 것은 없습니다)%b\n' \
+      "$COLOR_BOLD" "$COLOR_CYAN" "$CHANGE_COUNT" "$COLOR_RESET"
+  else
+    printf '  %b%b✔ 모든 설정이 완료되었습니다.%b\n' \
+      "$COLOR_BOLD" "$COLOR_GREEN" "$COLOR_RESET"
   fi
 }

@@ -7,7 +7,7 @@ configure_github_ssh() {
   local marker_end='# <<< mac-bootstrap GitHub SSH <<<'
   local effective_config
 
-  section "GitHub SSH (macOS Agent / Keychain)"
+  section "GitHub SSH (Keychain)"
 
   if [ ! -e "$key" ] && [ ! -L "$key" ] && [ ! -f "$downloaded_key" ]; then
     log_skip "개인키가 없습니다. ~/Downloads/id_ed25519를 다운로드한 뒤 다시 실행하세요."
@@ -27,7 +27,7 @@ configure_github_ssh() {
   fi
 
   if [ -e "$key" ] || [ -L "$key" ]; then
-    log_skip "기존 ~/.ssh/id_ed25519를 보존합니다."
+    log_done "SSH 개인키: 기존 ~/.ssh/id_ed25519 보존"
   else
     if ! (umask 077; /bin/cp -n "$downloaded_key" "$key"); then
       log_warn "SSH 개인키 복사 실패. 나머지 작업을 계속합니다."
@@ -43,7 +43,7 @@ configure_github_ssh() {
 
   if /usr/bin/grep -Fqx "$marker_begin" "$config" 2>/dev/null; then
     if /usr/bin/grep -Fqx "$marker_end" "$config"; then
-      log_skip "GitHub SSH 관리 블록: 이미 존재"
+      log_done "GitHub SSH 관리 블록: 존재"
     else
       log_warn "~/.ssh/config의 GitHub SSH 관리 블록이 불완전합니다. 직접 확인하세요."
     fi
@@ -80,7 +80,7 @@ EOF
   fi
 
   if /usr/bin/ssh-add --apple-use-keychain "$key"; then
-    log_ok "GitHub 개인키를 macOS SSH Agent / Keychain에 등록했습니다."
+    log_done "macOS SSH Agent / Keychain: GitHub 개인키 등록됨"
   else
     log_warn "SSH Agent 등록 실패. macOS Terminal에서 /usr/bin/ssh-add --apple-use-keychain ~/.ssh/id_ed25519를 다시 실행하세요."
   fi

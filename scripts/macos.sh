@@ -7,11 +7,11 @@ print_environment() {
   current_user="$(/usr/bin/id -un)"
   host_name="$(/usr/sbin/scutil --get ComputerName 2>/dev/null || /bin/hostname)"
 
-  printf '=== macOS Bootstrap ===\n\n'
-  printf 'User         : %s\n' "$current_user"
-  printf 'macOS        : %s (%s)\n' "$product_version" "$build_version"
-  printf 'Architecture : %s\n' "$architecture"
-  printf 'Host         : %s\n' "$host_name"
+  printf '%b%s%b\n' "$COLOR_BOLD" "━━━━━━━━━━━━━━━━━━━━ macOS Bootstrap ━━━━━━━━━━━━━━━━━━━━" "$COLOR_RESET"
+  printf '  User          %s\n' "$current_user"
+  printf '  macOS         %s (%s)\n' "$product_version" "$build_version"
+  printf '  Architecture  %s\n' "$architecture"
+  printf '  Host          %s\n' "$host_name"
 }
 
 configure_core_macos() {
@@ -55,7 +55,7 @@ configure_display_brightness() {
   fi
   local current="${result##*$'\n'}"
   if numeric_equal "$current" "$DISPLAY_BRIGHTNESS_PERCENT"; then
-    log_skip "내장 화면 밝기: 이미 ${DISPLAY_BRIGHTNESS_PERCENT}%"
+    log_done "내장 화면 밝기: ${DISPLAY_BRIGHTNESS_PERCENT}%"
     return 0
   fi
   log_change "내장 화면 밝기: ${current}% -> ${DISPLAY_BRIGHTNESS_PERCENT}%"
@@ -69,18 +69,19 @@ configure_display_brightness() {
 }
 
 apply_system_changes() {
-  section "설정 반영"
-
+  # 이번 실행에서 바뀐 시스템 설정이 없으면 섹션 자체를 출력하지 않는다.
   if [ "$SYSTEM_SETTINGS_CHANGED" -eq 0 ] && [ "$SHORTCUTS_CHANGED" -eq 0 ]; then
-    log_skip "즉시 반영할 시스템 설정 변경 없음"
     return 0
   fi
+
+  section "설정 반영"
 
   if [ "$DRY_RUN" -eq 1 ]; then
     log_change "실제 실행에서는 변경한 키보드·마우스·단축키 설정의 즉시 반영을 시도합니다."
     return 0
   fi
 
+  log_change "변경한 키보드·마우스·단축키 설정을 즉시 반영합니다."
   activation_tool="/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings"
   if [ ! -x "$activation_tool" ]; then
     log_warn "시스템 설정 즉시 활성화 도구를 사용할 수 없습니다. 로그아웃 후 확실히 반영됩니다."
@@ -100,5 +101,5 @@ apply_system_changes() {
     return 0
   fi
 
-  log_ok "키보드·마우스·단축키 설정 활성화 도구 실행 완료"
+  log_ok "설정 활성화 도구 실행 완료"
 }

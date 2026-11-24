@@ -29,7 +29,7 @@ configure_gureum_han2() {
   source_state="${source_state##*$'\n'}"
   case "$source_state" in
     enabled)
-      log_skip "구름 입력기와 두벌식 입력 소스: 이미 활성화됨"
+      log_done "구름 입력기와 두벌식 입력 소스: 활성화됨"
       return 0
       ;;
     missing)
@@ -125,7 +125,7 @@ configure_caps_lock_input_switch() {
   done
 
   if [ "$fn_usage_ok" -eq 1 ] && [ "$mappings_ok" -eq 1 ]; then
-    log_skip "Caps Lock 입력 소스 전환: 이미 설정됨"
+    log_done "Caps Lock 입력 소스 전환: 설정됨"
     return 0
   fi
 
@@ -191,7 +191,7 @@ configure_dictation_shortcut() {
   fi
   if [ "$auto_enable_ok" -eq 1 ] && \
      printf '%s\n' "$state" | /usr/bin/grep -Fqx 'DICTATION_ENABLED=false'; then
-    log_skip "받아쓰기 단축키와 활성화 안내: 이미 해제됨"
+    log_done "받아쓰기 단축키와 활성화 안내: 해제됨"
     return 0
   fi
 
@@ -244,7 +244,7 @@ configure_spotlight_shortcuts() {
   printf '%s\n' "$hotkey_state" | /usr/bin/grep -Eq '^SPOTLIGHT_65_ENABLED=(false|missing)$' && spotlight65_ok=1
 
   if [ "$spotlight64_ok" -eq 1 ] && [ "$spotlight65_ok" -eq 1 ]; then
-    log_skip "Spotlight 단축키: 이미 모두 비활성화됨"
+    log_done "Spotlight 단축키: 모두 비활성화됨"
     return 0
   fi
 
@@ -286,7 +286,7 @@ configure_screenshot_clipboard_shortcut() {
   if printf '%s\n' "$hotkey_state" | /usr/bin/grep -Fqx 'SCREENSHOT_CLIPBOARD_ENABLED=true' && \
      printf '%s\n' "$hotkey_state" | /usr/bin/grep -Fqx 'SCREENSHOT_CLIPBOARD_PARAMETERS=115,1,393216' && \
      printf '%s\n' "$hotkey_state" | /usr/bin/grep -Fqx 'SCREENSHOT_CLIPBOARD_TYPE=standard'; then
-    log_skip "선택 영역 스크린샷 클립보드 단축키: 이미 Control-Shift-S"
+    log_done "선택 영역 스크린샷 클립보드 단축키: Control-Shift-S"
     return 0
   fi
 

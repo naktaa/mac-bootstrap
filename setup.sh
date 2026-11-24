@@ -22,7 +22,7 @@ while [ "$#" -gt 0 ]; do
     --dry-run) DRY_RUN=1 ;;
     --no-reload-shell) NO_RELOAD_SHELL=1 ;;
     --help|-h) usage; exit 0 ;;
-    *) printf '[ERROR] 알 수 없는 옵션: %s\n' "$1" >&2; usage; exit 2 ;;
+    *) printf '✖ 알 수 없는 옵션: %s\n' "$1" >&2; usage; exit 2 ;;
   esac
   shift
 done
@@ -85,14 +85,15 @@ if [ "$(/usr/bin/uname -s)" != "Darwin" ]; then
 fi
 
 if ! validate_config; then
-  printf '\n설정값 오류를 수정한 뒤 다시 실행하세요.\n' >&2
+  printf '\n  설정값 오류를 수정한 뒤 다시 실행하세요.\n' >&2
   print_summary
   exit 2
 fi
 
 print_environment
 if [ "$DRY_RUN" -eq 1 ]; then
-  printf '\n[DRY RUN] 실제 시스템과 사용자 파일을 변경하지 않습니다.\n'
+  printf '\n  %b➜ DRY RUN: 실제 시스템과 사용자 파일을 변경하지 않습니다.%b\n' \
+    "$COLOR_CYAN" "$COLOR_RESET"
 fi
 
 configure_core_macos
@@ -112,7 +113,7 @@ fi
 if [ "$DRY_RUN" -eq 0 ] && [ "$NO_RELOAD_SHELL" -eq 0 ] && \
    is_true "$MANAGE_ZSH" && is_true "$RELOAD_ZSH_AFTER_SETUP" && \
    [ -t 0 ] && [ -t 1 ]; then
-  printf '\n새 로그인 zsh를 시작합니다. exit하면 이전 셸로 돌아갑니다.\n'
+  printf '\n  새 로그인 zsh를 시작합니다. exit하면 이전 셸로 돌아갑니다.\n\n'
   exec /bin/zsh -l
 fi
 exit 0

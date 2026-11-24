@@ -17,9 +17,9 @@ configure_shell() {
   source_line='[ -f "$HOME/.config/mac-bootstrap/zshrc" ] && source "$HOME/.config/mac-bootstrap/zshrc"'
 
   if [ -f "$managed_file" ] && /usr/bin/cmp -s "$source_file" "$managed_file"; then
-    log_skip "관리 zsh 설정 파일: 이미 최신"
+    log_done "관리 zsh 설정 파일: 최신"
   else
-    log_change "관리 zsh 설정을 $managed_file에 설치합니다."
+    log_change "관리 zsh 설정을 ${managed_file}에 설치합니다."
     if [ "$DRY_RUN" -eq 0 ]; then
       /bin/mkdir -p "$managed_dir" || {
         log_error "zsh 설정 디렉터리를 만들 수 없습니다: $managed_dir"
@@ -35,7 +35,7 @@ configure_shell() {
   if [ -f "$user_zshrc" ] && /usr/bin/grep -Fq "$marker_begin" "$user_zshrc"; then
     if /usr/bin/grep -Fq "$source_line" "$user_zshrc" && \
        /usr/bin/grep -Fq "$marker_end" "$user_zshrc"; then
-      log_skip "~/.zshrc 연결 블록: 이미 존재"
+      log_done "~/.zshrc 연결 블록: 존재"
     else
       log_warn "~/.zshrc의 mac-bootstrap marker 블록이 불완전합니다. 직접 확인하세요."
     fi
@@ -73,9 +73,9 @@ configure_vim() {
   source_line='execute "source " . fnameescape(expand("$HOME/.config/mac-bootstrap/vimrc"))'
 
   if [ -f "$managed_file" ] && /usr/bin/cmp -s "$source_file" "$managed_file"; then
-    log_skip "관리 Vim 설정 파일: 이미 최신"
+    log_done "관리 Vim 설정 파일: 최신"
   else
-    log_change "관리 Vim 설정을 $managed_file에 설치합니다."
+    log_change "관리 Vim 설정을 ${managed_file}에 설치합니다."
     if [ "$DRY_RUN" -eq 0 ]; then
       /bin/mkdir -p "$managed_dir" || {
         log_error "Vim 설정 디렉터리를 만들 수 없습니다: $managed_dir"
@@ -91,7 +91,7 @@ configure_vim() {
   if [ -f "$user_vimrc" ] && /usr/bin/grep -Fq "$marker_begin" "$user_vimrc"; then
     if /usr/bin/grep -Fq "$source_line" "$user_vimrc" && \
        /usr/bin/grep -Fq "$marker_end" "$user_vimrc"; then
-      log_skip "~/.vimrc 연결 블록: 이미 존재"
+      log_done "~/.vimrc 연결 블록: 존재"
     else
       log_warn "~/.vimrc의 mac-bootstrap marker 블록이 불완전합니다. 직접 확인하세요."
     fi
@@ -119,7 +119,7 @@ apply_git_config() {
 
   current="$(/usr/bin/git config --global --get "$key" 2>/dev/null)"
   if [ "$current" = "$desired" ]; then
-    log_skip "$label: 이미 $desired"
+    log_done "$label: $desired"
     return 0
   fi
 
